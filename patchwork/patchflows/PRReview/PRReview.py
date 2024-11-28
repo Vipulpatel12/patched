@@ -32,6 +32,14 @@ _SUMMARY_LEVEL = {
 
 class PRReview(Step):
     def __init__(self, inputs: dict):
+        """Initializes the class by registering necessary steps for the Patchflow progress and setting up inputs.
+        
+        Args:
+            inputs dict: A dictionary containing inputs to be used for initialization.
+        
+        Returns:
+            None: The constructor does not return any value but initializes the object state.
+        """ 
         PatchflowProgressBar(self).register_steps(
             CallLLM,
             CreatePRComment,
@@ -71,6 +79,16 @@ class PRReview(Step):
         self.inputs = final_inputs
 
     def run(self) -> dict:
+        """Executes the process of generating pull request (PR) summaries and comments based on the provided inputs.
+        
+        This method gathers input differences, generates suggestions or summaries using a language model, and prepares the necessary data for creating a PR comment. The verbosity level determines the extent of the output.
+        
+        Args:
+            self: The instance of the class which contains the inputs and verbosity level.
+        
+        Returns:
+            dict: A dictionary containing the final inputs, including generated PR header and modified code files.
+        """
         if self.verbosity == _SUMMARY_LEVEL[_NONE]:
             return dict()
 
