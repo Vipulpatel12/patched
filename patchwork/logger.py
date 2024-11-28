@@ -206,6 +206,14 @@ class TerminalHandler(RichHandler):
         log_level = logging.TRACE if log_level == "TRACE" else logging.getLevelName(log_level)
 
         def inner(record: logging.LogRecord) -> bool:
+            """Determines if a given log record meets or exceeds the specified log level.
+            
+            Args:
+                record logging.LogRecord: The log record to evaluate.
+            
+            Returns:
+                bool: True if the log record's level is greater than or equal to the specified log level, otherwise False.
+            """ 
             return record.levelno >= log_level
 
         return inner

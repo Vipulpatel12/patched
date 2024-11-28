@@ -111,6 +111,14 @@ class LlmClient(Protocol):
         if last_message is not None:
 
             def direction_callback(message_to_test: str) -> int:
+                """Determines the supported prompt length for a given message by checking against the model's limits.
+                
+                Args:
+                    message_to_test (str): The message content to be tested against the model's prompt limitations.
+                
+                Returns:
+                    int: The adjusted prompt support value after subtracting a safety margin from the model's calculated limit.
+                """
                 current_messages = truncated_messages.copy()
                 current_messages.append({"content": message_to_test})
                 # add 500 as a safety margin

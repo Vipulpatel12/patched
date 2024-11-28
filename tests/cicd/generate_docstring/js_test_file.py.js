@@ -34,6 +34,13 @@ const compare = function (keymap, a, b) {
  * @returns {void} This function does not return a value.
  */
 const sqlite = (db, query, callback) => {
+    /**
+     * Executes a serialized database operation using the specified query and callback function.
+     * The database operations within the serialize block are executed in sequence.
+     * @param {string} query - The SQL query to be executed against the database.
+     * @param {function} callback - The callback function that is called for each row returned by the query.
+     * @returns {void} This function does not return a value.
+     */
     db.serialize(function () {
         db.each(query, callback);
     });
