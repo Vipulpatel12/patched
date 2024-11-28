@@ -8,6 +8,18 @@ from patchwork.steps import ExtractPackageManagerFile
 class TestExtractPackageManagerFile(unittest.TestCase):
     def test_run(self):
         # Content of a SBOM VDR file
+        """Test the functionality of the ExtractPackageManagerFile step with a sample SBOM VDR file.
+        
+        This method creates a temporary SBOM VDR file containing component and vulnerability details,
+        instantiates the ExtractPackageManagerFile class, and verifies that the output contains
+        expected results, particularly that the 'files_to_patch' is not None.
+        
+        Args:
+            self: The instance of the test class.
+        
+        Returns:
+            None: This method does not return a value but asserts conditions on the output.
+        """
         sbom_vdr_file_content = """{
         "components": [
         {
