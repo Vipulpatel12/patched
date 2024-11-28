@@ -9,6 +9,23 @@ from patchwork.steps.SlackMessage.typed import SlackMessageInputs
 
 class SlackMessage(Step):
     def __init__(self, inputs):
+        """Initializes a Slack message client with the given input parameters.
+        
+        Args:
+            inputs dict: A dictionary containing required inputs for initializing the Slack client, including:
+                - slack_token (str): The OAuth token for the Slack API.
+                - slack_team (str, optional): The name of the Slack team to filter channels.
+                - slack_channel (str): The name of the Slack channel to send messages to.
+                - slack_message_template_file (str, optional): The path to a file containing the Slack message template.
+                - slack_message_template (str, optional): The raw template string for the Slack message.
+                - slack_message_template_values (dict, optional): A dictionary for key-value replacements in the Slack message template.
+        
+        Raises:
+            ValueError: If any required data is missing or invalid, such as an invalid Slack token, non-existent Slack channel, or missing message template.
+        
+        Returns:
+            None
+        """
         super().__init__(inputs)
         key_diff = SlackMessageInputs.__required_keys__.difference(inputs.keys())
         if key_diff:
@@ -63,5 +80,15 @@ class SlackMessage(Step):
                 self.slack_message = self.slack_message.replace("{{" + replacement_key + "}}", str(replacement_value))
 
     def run(self):
+        """Sends a message to a specified Slack channel using the Slack client.
+        
+        Args:
+            self.slack_client (SlackClient): An instance of the Slack client used to communicate with the Slack API.
+            self.slack_channel (str): The ID or name of the channel where the message will be sent.
+            self.slack_message (str): The content of the message to be sent to the channel.
+        
+        Returns:
+            dict: A dictionary containing a key 'is_slack_message_sent' indicating whether the message was successfully sent (True) or not (False).
+        """
         response = self.slack_client.chat_postMessage(channel=self.slack_channel, text=self.slack_message)
         return dict(is_slack_message_sent=response.get("ok", False))
