@@ -12,6 +12,15 @@ from patchwork.logger import logger
 
 
 def json_schema_to_model(json_schema: Dict[str, Any]) -> Type[BaseModel]:
+    """Converts a JSON schema into a Pydantic model class.
+    
+    Args:
+        json_schema Dict[str, Any]: A dictionary representing the JSON schema, 
+                                     which includes properties, title, and required fields.
+    
+    Returns:
+        Type[BaseModel]: A Pydantic model class generated based on the provided JSON schema.
+    """
     model_name = json_schema.get("title")
 
     field_definitions = dict()
@@ -25,6 +34,14 @@ def json_schema_to_model(json_schema: Dict[str, Any]) -> Type[BaseModel]:
 
 
 def __json_schema_to_pydantic_type(json_schema: Dict[str, Any]) -> type:
+    """Converts a JSON schema to a corresponding Pydantic type.
+    
+    Args:
+        json_schema Dict[str, Any]: The JSON schema definition that specifies the data structure.
+    
+    Returns:
+        type: The Pydantic type corresponding to the JSON schema definition.
+    """
     type_ = json_schema.get("type")
 
     if type_ == "string":
@@ -57,6 +74,17 @@ def __json_schema_to_pydantic_type(json_schema: Dict[str, Any]) -> type:
 
 
 def example_json_to_schema(json_example: str | dict | None) -> ResponseFormat | None:
+    """Converts a JSON example string or dictionary into a corresponding schema.
+    
+    Args:
+        json_example (str | dict | None): The JSON example that is to be converted. 
+                                            It can be a string representation of JSON, 
+                                            a dictionary, or None.
+    
+    Returns:
+        ResponseFormat | None: The schema generated from the input JSON example or 
+                               None if the input is None or invalid.
+    """
     if json_example is None:
         return None
 
@@ -73,10 +101,25 @@ def example_json_to_schema(json_example: str | dict | None) -> ResponseFormat | 
 
 
 def base_model_to_schema(base_model: Type[BaseModel]) -> ResponseFormat:
+    """Converts a BaseModel type to its corresponding ResponseFormat.
+    
+    Args:
+        base_model Type[BaseModel]: The BaseModel class to be converted.
+    
+    Returns:
+        ResponseFormat: The response format corresponding to the given BaseModel.
     return type_to_response_format_param(base_model)
 
 
 def __example_string_to_base_model(json_example: str) -> Type[BaseModel] | None:
+    """Converts a JSON string representation of an example into a BaseModel object.
+    
+    Args:
+        json_example str: A JSON formatted string that represents the example data.
+    
+    Returns:
+        Type[BaseModel] | None: An instance of BaseModel created from the parsed JSON data, or None if parsing fails.
+    """
     try:
         example_data = json.loads(json_example)
     except Exception as e:
@@ -87,6 +130,20 @@ def __example_string_to_base_model(json_example: str) -> Type[BaseModel] | None:
 
 
 def __example_dict_to_base_model(example_data: dict) -> Type[BaseModel]:
+    """Converts a dictionary representation of data into a BaseModel type.
+    
+    This method recursively processes dictionaries and lists within the input data 
+    to define the appropriate field types and metadata for a BaseModel, allowing 
+    for dynamic model creation.
+    
+    Args:
+        example_data dict: A dictionary containing the example data from which 
+                           the BaseModel fields will be created.
+    
+    Returns:
+        Type[BaseModel]: A dynamically created BaseModel class that represents 
+                         the structure and types defined in the input dictionary.
+    """
     base_model_field_defs: dict[str, tuple[type | BaseModel, Field]] = dict()
     for example_data_key, example_data_value in example_data.items():
         if isinstance(example_data_value, dict):
