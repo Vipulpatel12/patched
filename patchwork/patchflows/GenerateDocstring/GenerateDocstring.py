@@ -29,6 +29,14 @@ _DEFAULT_PROMPT_JSON = Path(__file__).parent / "prompt.json"
 
 class GenerateDocstring(Step):
     def __init__(self, inputs: dict):
+        """Initializes the class with the given input dictionary and registers necessary steps for the Patchflow progress bar.
+        
+        Args:
+            inputs dict: A dictionary containing input parameters that will be merged with default values.
+        
+        Returns:
+            None
+        """
         PatchflowProgressBar(self).register_steps(
             CallLLM,
             CommitChanges,
@@ -60,6 +68,14 @@ class GenerateDocstring(Step):
         self.inputs: dict[str, Any] = final_inputs
 
     def run(self) -> dict:
+        """Executes a series of processes to extract code comments, modify files, and create a pull request.
+        
+        Args:
+            self: object: An instance of the class containing this method, which holds the necessary inputs.
+        
+        Returns:
+            dict: A dictionary containing updated inputs after extracting code comments, modifying files, and creating a pull request.
+        """
         outputs = ExtractCodeMethodForCommentContexts(self.inputs).run()
         self.inputs.update(outputs)
 
