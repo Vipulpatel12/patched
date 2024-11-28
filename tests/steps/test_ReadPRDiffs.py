@@ -29,6 +29,18 @@ from patchwork.steps.ReadPRDiffs.ReadPRDiffs import _IGNORED_EXTENSIONS, ReadPRD
 )
 def test_read_prdiffs(mocker, inputs_extra, method_path, texts, expected):
     # Set up
+    """Tests the functionality of the ReadPRDiffs class by mocking dependencies and verifying the output.
+    
+    Args:
+        mocker (mocker.MagicMock): A mock object used to replace dependencies in the test.
+        inputs_extra (dict): A dictionary containing additional input parameters for the PR.
+        method_path (str): The path to the method that interacts with the SCM client to be mocked.
+        texts (list): A list of texts that the mocked Pull Request (PR) should return.
+        expected (any): The expected output from the run() method of ReadPRDiffs.
+    
+    Returns:
+        None
+    """
     base_inputs = {"pr_url": "https://example.com/pr"}
     inputs = {**base_inputs, **inputs_extra}
 
