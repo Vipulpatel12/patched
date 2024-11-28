@@ -30,6 +30,14 @@ class PatchflowProgressBar:
         patchflow_run_func = patchflow.run
 
         def inner_run():
+            """Executes the patchflow run function and updates the progress bar upon completion.
+            
+            Args:
+                None
+            
+            Returns:
+                Any: The result of the patchflow run function.
+            """
             try:
                 return patchflow_run_func()
             finally:
@@ -63,6 +71,15 @@ class PatchflowProgressBar:
         step_run_func = step.run
 
         def inner_run(*args, **kwargs):
+            """Executes the specified step function while updating the internal state.
+            
+            Args:
+                *args: Variable length argument list to be passed to the step run function.
+                **kwargs: Arbitrary keyword arguments to be passed to the step run function.
+            
+            Returns:
+                The return value of the step run function.
+            """
             with self.__update(step):
                 return step_run_func(*args, **kwargs)
 
