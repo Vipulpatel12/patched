@@ -34,6 +34,14 @@ class Compatibility(IntEnum):
 
     @staticmethod
     def from_str(value: str) -> "Compatibility":
+        """Converts a string representation of compatibility into a Compatibility enumeration.
+        
+        Args:
+            value str: The string representation of the compatibility.
+        
+        Returns:
+            Compatibility: The corresponding Compatibility enum member, or Compatibility.UNKNOWN if the input string is invalid.
+        """
         try:
             return Compatibility[value.upper()]
         except KeyError:
@@ -43,6 +51,14 @@ class Compatibility(IntEnum):
 
 class AutoFix(Step):
     def __init__(self, inputs: dict):
+        """Initializes the class with the provided inputs and sets up necessary configurations.
+        
+        Args:
+            inputs dict: A dictionary of inputs to configure the class instance.
+        
+        Returns:
+            None: This is a constructor method and does not return a value.
+        """
         PatchflowProgressBar(self).register_steps(
             CallLLM,
             CommitChanges,
@@ -82,6 +98,16 @@ class AutoFix(Step):
         self.inputs = final_inputs
 
     def run(self) -> dict:
+        """Executes a series of transformations and validations on input data through multiple processes.
+        
+        The method runs a defined number of iterations where it scans, extracts, modifies, and validates the code based on compatibility thresholds.
+        
+        Args:
+            self: The instance of the class containing the method and its properties.
+        
+        Returns:
+            dict: Updated inputs after running various code processing steps, including results from scanning, extraction, modification, and pull request creation.
+        """
         outputs = ScanSemgrep(self.inputs).run()
         self.inputs.update(outputs)
         outputs = ExtractCode(self.inputs).run()
