@@ -23,6 +23,18 @@ def get_source_code_contexts(
     force_code_contexts: bool,
     allow_overlap_contexts: bool,
 ) -> list[Position]:
+    """Retrieves source code contexts based on provided strategies and constraints.
+    
+    Args:
+        filepath (str): The path to the source code file.
+        source_lines (list[str]): A list of lines of source code.
+        context_strategies (list[str]): A list of context strategy identifiers.
+        force_code_contexts (bool): A flag indicating whether to force code contexts.
+        allow_overlap_contexts (bool): A flag indicating whether to allow overlapping contexts.
+    
+    Returns:
+        list[Position]: A sorted list of Position objects representing the determined contexts.
+    """
     context_strategies = ContextStrategies.get_context_strategies(*context_strategies)
     context_strategies = [
         strategy for strategy in context_strategies if strategy.is_file_supported(filepath, source_lines)
@@ -72,6 +84,20 @@ class ExtractCodeContexts(Step):
     required_keys = {}
 
     def __init__(self, inputs: dict):
+        """Initializes an instance with the provided input parameters.
+        
+        Args:
+            inputs dict: A dictionary of input parameters required for initialization. 
+                Must contain all required keys specified in the `required_keys` attribute.
+                - "base_path" (str): The directory path to be used as the base path. Defaults to the current working directory if not provided.
+                - "context_grouping" (str): Defines the grouping method for contexts. Defaults to "ALL" if not specified.
+                - "force_code_contexts" (bool): A flag indicating whether to enforce code contexts. Defaults to False if not specified.
+                - "allow_overlap_contexts" (bool): A flag indicating whether overlapping contexts are allowed. Defaults to True if not specified.
+                - "max_depth" (int): Maximum depth level for processing. Defaults to -1 if not provided.
+        
+        Raises:
+            ValueError: If any of the required keys are missing from the `inputs` dictionary.
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -84,6 +110,15 @@ class ExtractCodeContexts(Step):
         self.max_depth = int(inputs.get("max_depth", -1))
 
     def run(self) -> dict:
+        """Executes the extraction of code contexts from files and returns a dictionary with the extracted details.
+        
+        Args:
+            self: The instance of the class. It contains parameters such as max_depth.
+        
+        Returns:
+            dict: A dictionary containing a list of extracted code contexts with file URIs, 
+                  starting and ending lines, and the affected code.
+        """
         extracted_code_contexts = []
         for file_path, src, position in self.get_positions(max_depth=self.max_depth):
             extracted_code_context = dict(
@@ -99,6 +134,15 @@ class ExtractCodeContexts(Step):
         )
 
     def get_positions(self, max_depth: int):
+        """Retrieves source code positions from files within a specified directory while applying various filters.
+        
+        Args:
+            max_depth (int): The maximum depth to traverse in the directory structure when searching for files.
+        
+        Returns:
+            Generator[Tuple[str, List[str], Any]]: A generator that yields tuples containing the file path, 
+            the file content as a list of lines, and the extracted source code context positions.
+        """
         ignored_groks = IGNORE_DIRS | IGNORE_EXTS_GLOBS | IGNORE_FILES_GLOBS
         path_filter = PathFilter(base_path=self.base_path, ignored_groks=ignored_groks, max_depth=max_depth)
 
