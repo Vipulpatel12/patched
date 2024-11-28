@@ -27,6 +27,14 @@ _DEFAULT_PROMPT_JSON = Path(__file__).parent / "prompt.json"
 
 class ResolveIssue(Step):
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class and sets up the progress bar for various steps.
+        
+        Args:
+            inputs dict: A dictionary containing initial input values to configure the instance.
+        
+        Returns:
+            None: This method does not return any value but initializes the instance with the provided inputs.
+        """
         PatchflowProgressBar(self).register_steps(
             CallLLM,
             CommitChanges,
@@ -64,6 +72,16 @@ class ResolveIssue(Step):
         self.inputs = final_inputs
 
     def run(self) -> dict:
+        """Executes a sequence of operations to process repository issues, generate relevant embeddings, and create pull requests if required.
+        
+        This method handles the flow of logic for generating code repository embeddings, reading issue details, querying embeddings, creating comments on issues, resolving problems with code modifications, and finally committing changes and generating a pull request.
+        
+        Args:
+            self: The instance of the class that holds the input parameters and configuration.
+        
+        Returns:
+            dict: The updated inputs dictionary containing the results of each operation performed during the run, including issue details and any modifications made to the code.
+        """
         outputs = GenerateCodeRepositoryEmbeddings(self.inputs).run()
         self.inputs.update(outputs)
 
