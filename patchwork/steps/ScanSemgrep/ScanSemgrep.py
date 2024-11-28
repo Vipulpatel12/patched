@@ -11,6 +11,24 @@ from patchwork.steps.ScanSemgrep.typed import ScanSemgrepInputs, ScanSemgrepOutp
 
 class ScanSemgrep(Step, input_class=ScanSemgrepInputs, output_class=ScanSemgrepOutputs):
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class.
+        
+        This constructor accepts a dictionary of inputs and initializes the instance variables based on the provided data. It retrieves `semgrep_extra_args`, loads SARIF values from a specified file, or directly from the input if available. It also parses paths into a list using defined delimiters.
+        
+        Args:
+            inputs dict: A dictionary containing initialization parameters, including:
+                - "semgrep_extra_args" (str): Additional arguments for Semgrep.
+                - "sarif_file_path" (str): Path to a SARIF file from which to load values.
+                - "sarif_values" (str or dict): SARIF values either as a JSON string or dictionary.
+                - "path_key" (str): The key used to identify paths in the inputs (default is "path").
+                - "paths" (str): A string of paths, potentially delimited by commas or specified key.
+        
+        Raises:
+            ValueError: If the specified SARIF file does not exist.
+        
+        Returns:
+            None
+        """
         super().__init__(inputs)
 
         self.extra_args = inputs.get("semgrep_extra_args", "")
@@ -33,6 +51,20 @@ class ScanSemgrep(Step, input_class=ScanSemgrepInputs, output_class=ScanSemgrepO
         self.paths = parse_to_list(inputs.get("paths", ""), possible_delimiters=[",", None], possible_keys=[path_key])
 
     def run(self) -> dict:
+        """Executes a scan using Semgrep and returns the SARIF output.
+        
+        This method checks if SARIF values are provided; if so, it returns them directly. 
+        If not, it runs the Semgrep command with specified paths and extra arguments, 
+        captures its output, and attempts to parse it as JSON. In case of a parsing error, 
+        it logs the error and updates the status accordingly.
+        
+        Args:
+            self: The instance of the class containing the method.
+        
+        Returns:
+            dict: A dictionary containing the SARIF values if the scan is successful or 
+                  an empty dictionary if the scan fails or SARIF values are not available.
+        """
         if self.sarif_values is not None:
             self.set_status(StepStatus.SKIPPED, "Using provided SARIF")
             return dict(sarif_values=self.sarif_values)
