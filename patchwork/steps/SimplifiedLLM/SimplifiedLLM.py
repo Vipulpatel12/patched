@@ -17,6 +17,23 @@ from patchwork.steps.SimplifiedLLM.typed import SimplifiedLLMInputs
 
 class SimplifiedLLM(Step):
     def __init__(self, inputs):
+        """Initializes the class with the provided input parameters and validates the presence of required keys.
+        
+        Args:
+            inputs dict: A dictionary containing the input parameters required for initialization. 
+                         It must include 'prompt_user' and 'prompt_values' as mandatory keys.
+        
+        Raises:
+            ValueError: If any required keys are missing from the input parameters.
+        
+        Attributes:
+            user: The value associated with the 'prompt_user' key from inputs.
+            system: The value associated with the 'prompt_system' key from inputs, if provided.
+            prompt_values: The value associated with the 'prompt_values' key from inputs.
+            is_json_mode: A boolean indicating whether JSON mode is enabled, based on the 'json' key in inputs.
+            json_example: An optional example of JSON, based on the 'json_example' key in inputs.
+            inputs: The original inputs dictionary provided during initialization.
+        """
         super().__init__(inputs)
         missing_keys = SimplifiedLLMInputs.__required_keys__.difference(set(inputs.keys()))
         if len(missing_keys) > 0:
@@ -30,6 +47,15 @@ class SimplifiedLLM(Step):
         self.inputs = inputs
 
     def __record_status_or_raise(self, retry_data: RetryData, step: Step):
+        """Records the status of a step or raises an error if the retry limit has been reached or the step status is not FAILED.
+        
+        Args:
+            retry_data RetryData: The data related to retry attempts, containing the current retry count and retry limit.
+            step Step: The step object whose status is to be recorded.
+        
+        Returns:
+            None: This method does not return a value. It either sets the status or raises an exception.
+        """
         if retry_data.retry_count == retry_data.retry_limit or step.status != StepStatus.FAILED:
             self.set_status(step.status, step.status_message)
         else:
@@ -37,6 +63,17 @@ class SimplifiedLLM(Step):
 
     @staticmethod
     def __json_loads(json_str: str) -> dict:
+        """Deserializes a JSON string into a Python dictionary, attempting to repair it if initial decoding fails.
+        
+        Args:
+            json_str str: A string containing the JSON data to be deserialized.
+        
+        Returns:
+            dict: A dictionary representation of the deserialized JSON data.
+        
+        Raises:
+            json.JSONDecodeError: If the JSON string cannot be decoded, even after attempting to repair it.
+        """
         try:
             return json.loads(json_str, strict=False)
         except json.JSONDecodeError as e:
@@ -50,6 +87,16 @@ class SimplifiedLLM(Step):
             raise e
 
     def __retry_unit(self, prepare_prompt_outputs, call_llm_inputs, retry_data: RetryData):
+        """Retries a unit of work involving calling a language model and processing the responses based on the mode of operation.
+        
+        Args:
+            prepare_prompt_outputs dict: A dictionary containing the prepared outputs for prompts.
+            call_llm_inputs dict: A dictionary containing the inputs required to call the language model.
+            retry_data RetryData: An instance of RetryData used to track the status of the retry operation.
+        
+        Returns:
+            dict: A dictionary excluding any None values containing the prompts, language model responses, extracted responses, request tokens, and response tokens.
+        """
         call_llm = CallLLM(call_llm_inputs)
         call_llm_outputs = call_llm.run()
         self.__record_status_or_raise(retry_data, call_llm)
@@ -88,6 +135,16 @@ class SimplifiedLLM(Step):
         )
 
     def run(self) -> dict:
+        """Executes the main logic for processing user input and generating a response using a language model.
+        
+        Args:
+            self: The instance of the class which contains attributes such as user, system, prompt_values, inputs, 
+                  is_json_mode, and json_example necessary for prompt preparation and language model invocation.
+        
+        Returns:
+            dict: A dictionary containing the response from the language model after processing the input prompts 
+                  and any relevant metadata.
+        """
         prompts = [dict(role="user", content=self.user)]
         if self.system:
             prompts.insert(0, dict(role="system", content=self.system))
