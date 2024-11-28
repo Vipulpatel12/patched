@@ -27,6 +27,16 @@ example_java_lines = [
     [(JavaClassStrategy(), (6, 12)), (JavaMethodStrategy(), (8, 11)), (JavaBlockStrategy(), (8, 11))],
 )
 def test_java_strategy(strategy, expected_range):
+    """Tests the Java strategy's context index retrieval by comparing the actual output 
+       with the expected start and end positions.
+    
+    Args:
+        strategy (JavaStrategy): The Java strategy instance used to retrieve context indexes.
+        expected_range (tuple): A tuple containing the expected start and end indices.
+    
+    Returns:
+        None: This function asserts the correctness of the retrieved index positions.
+    """
     expected_start, expected_end = expected_range
     position = strategy.get_context_indexes(example_java_lines, 8, 9)
     assert position.start == expected_start
