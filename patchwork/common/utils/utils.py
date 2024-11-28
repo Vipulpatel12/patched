@@ -41,6 +41,14 @@ def _cleanup_handler(prev_handler: Callable):
         Callable: A new function that performs cleanup and then returns the previous handler.
     """
     def inner(*args):
+        """Calls the cleanup function and returns the previous handler.
+        
+        Args:
+            *args: List of arguments to be passed to the inner function.
+        
+        Returns:
+            Callable: The previous handler function that was saved prior to cleanup.
+        """
         _cleanup_files()
         return prev_handler
 
