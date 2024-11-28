@@ -33,6 +33,14 @@ logger.addHandler(__noop)
 
 class TerminalHandler(RichHandler):
     def __init__(self, log_level: str):
+        """Initializes a logging instance with a specified log level.
+        
+        Args:
+            log_level (str): The logging level that determines which log messages will be output.
+        
+        Returns:
+            None
+        """
         super().__init__(
             console=console,
             rich_tracebacks=True,
@@ -50,6 +58,14 @@ class TerminalHandler(RichHandler):
 
     @contextlib.contextmanager
     def freeze(self):
+        """Freezes the live rendering state, allowing for execution of code without interference from the live updates.
+        
+        Args:
+            None
+        
+        Returns:
+            None: This method does not return a value but yields control back to the calling context.
+        """
         if self.__live is not None:
             current_render = self.__live.renderable
             self.__live.update("")
@@ -64,6 +80,14 @@ class TerminalHandler(RichHandler):
             yield
 
     def __reset_live(self):
+        """Resets the live status and associated components by stopping the live instance and clearing related attributes.
+        
+        Args:
+            None
+        
+        Returns:
+            None
+        """
         if self.__live is not None:
             self.__live.stop()
 
@@ -74,12 +98,28 @@ class TerminalHandler(RichHandler):
         self.__progress_bar = None
 
     def register_progress_bar(self, progress_bar: Progress):
+        """Registers a progress bar to the current instance and updates the live display if applicable.
+        
+        Args:
+            progress_bar Progress: The progress bar instance to be registered.
+        
+        Returns:
+            None: This method does not return any value.
+        """ 
         self.__progress_bar = progress_bar
         if self.__live is not None:
             self.__live.update(Group(self.__panel, progress_bar))
             self.__live.refresh()
 
     def deregister_progress_bar(self):
+        """Deregisters the progress bar by setting it to None and refreshes the live display if it is active.
+        
+        Args:
+            None
+        
+        Returns:
+            None
+        """
         self.__progress_bar = None
         if self.__live is not None:
             self.__live.update(Group(self.__panel))
@@ -87,6 +127,15 @@ class TerminalHandler(RichHandler):
 
     @contextlib.contextmanager
     def panel(self, title: str):
+        """Initializes a panel with the specified title and manages its live rendering.
+        
+        Args:
+            title (str): The title to be displayed on the panel.
+        
+        Returns:
+            Generator: A context manager that manages the lifecycle of the panel, yielding control
+                       during its operation and ensuring proper cleanup on exit.
+        """
         global console
         self.__panel_lines = []
         self.__panel_title = title
@@ -106,6 +155,14 @@ class TerminalHandler(RichHandler):
             self.console.print("\n")
 
     def emit(self, record: logging.LogRecord) -> None:
+        """Processes a logging record and emits it with appropriate formatting based on its severity level.
+        
+        Args:
+            record logging.LogRecord: The logging record to be processed and emitted.
+        
+        Returns:
+            None: This method does not return any value.
+        """
         markup = getattr(record, "markup", None)
         if not markup:
             message = escape(record.getMessage())
@@ -123,11 +180,29 @@ class TerminalHandler(RichHandler):
             super().emit(record)
 
     def __emit_panel(self, record: logging.LogRecord) -> None:
+        """Emits a log record and updates the panel with the new message.
+        
+        Args:
+            record logging.LogRecord: The log record containing the message to emit.
+        
+        Returns:
+            None: This method does not return a value.
+        """
         self.__panel_lines.append(record.getMessage())
         self.__panel.renderable = "\n".join(self.__panel_lines)
         self.__live.refresh()
 
     def __get_filter(self, log_level: str) -> Callable[[logging.LogRecord], bool]:
+        """Generates a filter function that determines if a logging record should be processed based on the specified log level.
+        
+        Args:
+            log_level str: The log level to filter records by, which can be a string representation of a level (e.g., 'INFO', 'ERROR') 
+                           or the string 'TRACE' to use the TRACE level.
+        
+        Returns:
+            Callable[[logging.LogRecord], bool]: A function that takes a logging.LogRecord and returns True if the record's log level
+                                                  is greater than or equal to the specified log level, otherwise returns False.
+        """
         log_level = logging.TRACE if log_level == "TRACE" else logging.getLevelName(log_level)
 
         def inner(record: logging.LogRecord) -> bool:
@@ -137,6 +212,14 @@ class TerminalHandler(RichHandler):
 
 
 def init_cli_logger(log_level: str) -> logging.Logger:
+    """Initializes and configures the CLI logger with a specified logging level.
+    
+    Args:
+        log_level str: The desired logging level as a string (e.g., 'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').
+    
+    Returns:
+        logging.Logger: An instance of the configured logger.
+    """
     global logger, __noop
 
     warnings.simplefilter("ignore")
