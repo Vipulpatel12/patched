@@ -55,6 +55,16 @@ example_js_lines = [
     ],
 )
 def test_js_strategy_contexts(strategy, expected_context_count, lines):
+    """Tests the behavior of a given strategy's context extraction method.
+    
+    Args:
+        strategy (Strategy): An instance of a strategy class that implements the context extraction method.
+        expected_context_count (int): The expected number of contexts to be returned by the strategy.
+        lines (list): A list of lines from which contexts will be extracted.
+    
+    Returns:
+        None: This function does not return a value; it asserts the expected condition.
+    """
     contexts = strategy.get_contexts(lines)
     assert len(contexts) == expected_context_count
 
@@ -71,6 +81,16 @@ def test_js_strategy_contexts(strategy, expected_context_count, lines):
     ],
 )
 def test_js_strategy_line_context_misses(strategy, line_range, lines):
+    """Tests the behavior of the JavaScript strategy when the context for a specific line range is missed.
+    
+    Args:
+        strategy (Strategy): An instance of the strategy being tested, which provides the method to get context indexes.
+        line_range (tuple): A tuple containing the start and end indices of the line range to be checked.
+        lines (list): A list of lines to be examined for context.
+    
+    Returns:
+        None: This function asserts if the context indexes returned are None, indicating a miss.
+    """
     position = strategy.get_context_indexes(lines, line_range[0], line_range[1])
     assert position is None
 
@@ -87,6 +107,17 @@ def test_js_strategy_line_context_misses(strategy, line_range, lines):
     ],
 )
 def test_js_strategy_line_context(strategy, line_range, expected_range, lines):
+    """Tests the functionality of the 'get_context_indexes' method of a given strategy.
+    
+    Args:
+        strategy (object): The strategy object that contains the method to be tested.
+        line_range (tuple): A tuple containing the start and end indexes of the lines to be processed.
+        expected_range (tuple): A tuple containing the expected start and end indexes returned by the method.
+        lines (list): A list of lines to be examined by the strategy method.
+    
+    Returns:
+        None: Asserts that the actual start and end indexes match the expected values without returning any value.
+    """
     expected_start, expected_end = expected_range
     position = strategy.get_context_indexes(lines, line_range[0], line_range[1])
     assert position.start == expected_start
