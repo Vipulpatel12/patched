@@ -9,6 +9,20 @@ class PreparePR(Step):
     required_keys = {"modified_code_files"}
 
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class and validates the provided input dictionary.
+        
+        Args:
+            inputs dict: A dictionary containing the keys and values necessary for initialization.
+                The dictionary must include the following:
+                - 'modified_code_files' (list): A list of modified code files for the pull request.
+                - 'pr_header' (str, optional): A custom header for the pull request.
+        
+        Raises:
+            ValueError: If any of the required keys are missing from the input dictionary.
+        
+        Returns:
+            None
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -22,6 +36,18 @@ class PreparePR(Step):
             self.header = inputs["pr_header"]
 
     def run(self) -> dict:
+        """Generates a pull request body based on modified code files.
+        
+        This method checks for modified code files and constructs a formatted 
+        string suitable for a pull request. If no modified files are found, 
+        it updates the status to 'SKIPPED' and returns an empty pull request body.
+        
+        Args:
+            self: The instance of the class calling this method.
+        
+        Returns:
+            dict: A dictionary containing the pull request body under the key 'pr_body'.
+        """
         if len(self.modified_code_files) == 0:
             self.set_status(StepStatus.SKIPPED, "No modified files to prepare a PR for.")
             return dict(pr_body="")
