@@ -27,6 +27,11 @@ from patchwork.common.client.llm.utils import json_schema_to_model
 
 @functools.lru_cache
 def _cached_list_model_from_google() -> list[Model]:
+    """Fetches a list of models from the Google Generative AI service and returns it as a list.
+    
+    Returns:
+        list[Model]: A list of Model objects retrieved from the generative AI service.
+    """
     return list(generativeai.list_models())
 
 
@@ -40,22 +45,63 @@ class GoogleLlmClient(LlmClient):
     __MODEL_PREFIX = "models/"
 
     def __init__(self, api_key: str):
+        """Initializes the class with the provided API key and configures the generative AI with it.
+        
+        Args:
+            api_key str: The API key used for authentication with the generative AI service.
+        
+        Returns:
+            None: This method does not return a value.
+        """
         self.__api_key = api_key
         generativeai.configure(api_key=api_key)
 
     def __get_model_limits(self, model: str) -> int:
+        """Retrieves the input token limit for a specified model.
+        
+        Args:
+            model str: The name of the model for which the input token limit is to be retrieved.
+        
+        Returns:
+            int: The input token limit for the specified model, or a default limit of 1,000,000 if the model is not found.
+        """
         for model_info in _cached_list_model_from_google():
             if model_info.name == f"{self.__MODEL_PREFIX}{model}":
                 return model_info.input_token_limit
         return 1_000_000
 
     def get_models(self) -> set[str]:
+        """Retrieves a set of model names by removing the model prefix from the cached list of models.
+        
+        Args:
+            None
+        
+        Returns:
+            set[str]: A set containing the model names without the model prefix.
+        """
         return {model.name.removeprefix(self.__MODEL_PREFIX) for model in _cached_list_model_from_google()}
 
     def is_model_supported(self, model: str) -> bool:
+        """Check if a specified model is supported by the system.
+        
+        Args:
+            model str: The name of the model to be checked for support.
+        
+        Returns:
+            bool: True if the model is supported, False otherwise.
+        """
         return model in self.get_models()
 
     def is_prompt_supported(self, messages: Iterable[ChatCompletionMessageParam], model: str) -> int:
+        """Checks if the provided chat prompt is supported by the specified model by calculating the token count and comparing it to the model's limitations.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: A collection of chat messages to be evaluated for token limits.
+            model str: The name of the model against which the prompt support is being checked.
+        
+        Returns:
+            int: The difference between the model's token limit and the current token count, or -1 if an error occurs during token counting.
+        """
         system, chat = self.__openai_messages_to_google_messages(messages)
         gen_model = generativeai.GenerativeModel(model_name=model, system_instruction=system)
         try:
@@ -68,12 +114,30 @@ class GoogleLlmClient(LlmClient):
     def truncate_messages(
         self, messages: Iterable[ChatCompletionMessageParam], model: str
     ) -> Iterable[ChatCompletionMessageParam]:
+        """Truncates a collection of chat messages to fit within a specified model's constraints.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: An iterable collection of chat messages to be truncated.
+            model str: The model identifier used to determine the truncation limits.
+        
+        Returns:
+            Iterable[ChatCompletionMessageParam]: An iterable collection of truncated chat messages.
+        """
         return self._truncate_messages(self, messages, model)
 
     @staticmethod
     def __openai_messages_to_google_messages(
         messages: Iterable[ChatCompletionMessageParam],
     ) -> tuple[str, list[dict[str, Any]]]:
+        """Converts OpenAI chat messages into a format suitable for Google messages.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: An iterable of chat messages containing message roles and content.
+        
+        Returns:
+            tuple[str, list[dict[str, Any]]]: A tuple where the first element is the system message content as a string (or None if not present), 
+            and the second element is a list of dictionaries representing the user and assistant messages along with their content parts.
+        """
         system_content = None
         contents = []
         for message in messages:
@@ -102,6 +166,26 @@ class GoogleLlmClient(LlmClient):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
     ) -> ChatCompletion:
+        """Generates chat completions based on the provided messages and model parameters.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: The input messages for the chat completion.
+            model str: The model identifier to use for generating the completion.
+            frequency_penalty Optional[float] | NotGiven: Optional penalty to apply based on frequency of tokens.
+            logit_bias Optional[Dict[str, int]] | NotGiven: Optional bias to apply to specific tokens in generation.
+            logprobs Optional[bool] | NotGiven: Optional flag indicating if log probabilities should be returned.
+            max_tokens Optional[int] | NotGiven: Optional maximum number of tokens to generate in the response.
+            n Optional[int] | NotGiven: Optional number of completions to generate for the prompt.
+            presence_penalty Optional[float] | NotGiven: Optional penalty to apply based on presence of tokens.
+            response_format completion_create_params.ResponseFormat | NotGiven: Optional format for the response.
+            stop Union[Optional[str], List[str]] | NotGiven: Optional stopping sequences for generation.
+            temperature Optional[float] | NotGiven: Optional value controlling randomness of outputs.
+            top_logprobs Optional[int] | NotGiven: Optional value for number of top log probabilities to return.
+            top_p Optional[float] | NotGiven: Optional cumulative probability threshold for sampling.
+        
+        Returns:
+            ChatCompletion: The generated chat completion response object.
+        """
         generation_dict = dict(
             stop_sequences=[stop] if isinstance(stop, str) else stop,
             max_output_tokens=max_tokens,
@@ -132,6 +216,15 @@ class GoogleLlmClient(LlmClient):
 
     @staticmethod
     def __google_response_to_openai_response(google_response: GenerateContentResponse, model: str) -> ChatCompletion:
+        """Converts a Google response to an OpenAI response format.
+        
+        Args:
+            google_response GenerateContentResponse: The response object obtained from Google's content generation.
+            model str: The model name used for generating content.
+        
+        Returns:
+            ChatCompletion: An OpenAI response object formatted from the Google response.
+        """
         choices = []
         for candidate in google_response.candidates:
             # note that instead of system, from openai, its model, from google.
@@ -171,6 +264,16 @@ class GoogleLlmClient(LlmClient):
 
     @staticmethod
     def json_schema_to_google_schema(json_schema: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Converts a JSON schema into a Google schema format.
+        
+        Args:
+            json_schema dict[str, Any] | None: The input JSON schema to be converted. 
+                If None, the function returns None.
+        
+        Returns:
+            dict[str, Any] | None: A Google schema representation of the input JSON schema. 
+                Returns None if the input JSON schema is None.
+        """
         if json_schema is None:
             return None
 
