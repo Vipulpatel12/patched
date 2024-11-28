@@ -12,6 +12,19 @@ class ExtractCodeMethodForCommentContexts(Step):
     required_keys = {}
 
     def __init__(self, inputs: dict):
+        """Initializes the class instance with the provided input parameters.
+        
+        Args:
+            inputs dict: A dictionary containing the initialization parameters. This must include all required keys as defined in 'required_keys'. 
+                         The dictionary may contain additional optional keys: 
+                         - "base_path" (str): Specifies the base path; defaults to the current working directory if not provided.
+                         - "force_code_contexts" (bool): A flag to force code contexts; defaults to False if not provided.
+                         - "allow_overlap_contexts" (bool): A flag to allow overlapping contexts; defaults to True if not provided.
+                         - "max_depth" (int): Specifies the maximum depth; defaults to -1 if not provided.
+        
+        Raises:
+            ValueError: If any required keys are missing from the input dictionary.
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -23,6 +36,16 @@ class ExtractCodeMethodForCommentContexts(Step):
         self.max_depth = int(inputs.get("max_depth", -1))
 
     def run(self) -> dict:
+        """Executes the extraction of code contexts, generating a structured dictionary of file patches.
+        
+        Args:
+            self: Instance of the class containing necessary attributes for execution.
+        
+        Returns:
+            dict: A dictionary containing a list of code contexts that need to be patched, 
+                  with each context detailing the file URI, start line, end line, 
+                  affected code, and comment format.
+        """
         positions_gen = ExtractCodeContexts(
             dict(
                 base_path=self.base_path,
