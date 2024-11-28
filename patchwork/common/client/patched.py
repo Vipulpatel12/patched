@@ -32,6 +32,14 @@ class TCPKeepAliveHTTPSConnectionPool(HTTPSConnectionPool):
     TCP_KEEP_CNT = 3
 
     def _validate_conn(self, conn):
+        """Validates and configures the TCP connection settings based on the operating system.
+        
+        Args:
+            conn Connection: The connection object that needs to be validated and configured.
+        
+        Returns:
+            None: This method does not return any value.
+        """
         super()._validate_conn(conn)
 
         if sys.platform == "linux":
@@ -52,6 +60,16 @@ class TCPKeepAliveHTTPSConnectionPool(HTTPSConnectionPool):
 
 class KeepAlivePoolManager(PoolManager):
     def __init__(self, num_pools=10, headers=None, **connection_pool_kw):
+        """Initializes a new instance of the class, setting up connection pooling for HTTP and HTTPS.
+        
+        Args:
+            num_pools (int): The number of connection pools to create. Defaults to 10.
+            headers (dict, optional): Custom headers to include with the connection requests. Defaults to None.
+            **connection_pool_kw: Additional keyword arguments for connection pool configuration.
+        
+        Returns:
+            None
+        """
         super().__init__(num_pools=num_pools, headers=headers, **connection_pool_kw)
         self.pool_classes_by_scheme = {
             "http": HTTPConnectionPool,
@@ -61,6 +79,17 @@ class KeepAlivePoolManager(PoolManager):
 
 class KeepAliveHTTPSAdapter(HTTPAdapter):
     def init_poolmanager(self, connections, maxsize, block=DEFAULT_POOLBLOCK, **pool_kwargs):
+        """Initializes a pool manager with specified connection settings.
+        
+        Args:
+            connections int: The number of connection pools to create.
+            maxsize int: The maximum number of connections to save in the pool.
+            block bool, optional: Whether to block when no connections are available (default is DEFAULT_POOLBLOCK).
+            **pool_kwargs: Additional keyword arguments to pass to the pool manager.
+        
+        Returns:
+            None: This method does not return a value.
+        """
         self.poolmanager = KeepAlivePoolManager(
             num_pools=connections,
             maxsize=maxsize,
@@ -78,6 +107,15 @@ class PatchedClient(click.ParamType):
     }
 
     def __init__(self, access_token: str, url: str = DEFAULT_PATCH_URL):
+        """Initializes an instance of the class with an access token and an optional URL.
+        
+        Args:
+            access_token str: The access token required for authentication.
+            url str: (Optional) The URL to be used for API requests, defaulting to DEFAULT_PATCH_URL.
+        
+        Returns:
+            None
+        """
         self.access_token = access_token
         self.url = url
         self._session = Session()
@@ -86,9 +124,29 @@ class PatchedClient(click.ParamType):
 
     def _edit_tcp_alive(self):
         # credits to https://www.finbourne.com/blog/the-mysterious-hanging-client-tcp-keep-alives
+        """Configures the session to use TCP keep-alive by mounting a KeepAliveHTTPSAdapter.
+        
+        This method is intended to enhance the persistence of the session by maintaining
+        TCP connections alive for longer periods, potentially improving performance for
+        subsequent requests.
+        
+        Args:
+            None
+        
+        Returns:
+            None
+        """
         self._session.mount("https://", KeepAliveHTTPSAdapter())
 
     def _post(self, **kwargs) -> Response | None:
+        """Sends a POST request using the session.
+        
+        Args:
+            **kwargs: Additional keyword arguments that will be passed to the POST request.
+        
+        Returns:
+            Response | None: Returns the response from the POST request if successful, otherwise None.
+        """
         try:
             response = self._session.post(**kwargs)
         except requests.ConnectionError as e:
@@ -101,6 +159,14 @@ class PatchedClient(click.ParamType):
         return response
 
     def _get(self, **kwargs) -> Response | None:
+        """Executes a GET request using the session and handles any potential exceptions.
+        
+        Args:
+            **kwargs: Additional keyword arguments that are passed to the session's get method.
+        
+        Returns:
+            Response | None: The Response object if the request is successful, None if there was a connection error or another request exception.
+        """
         try:
             response = self._session.get(**kwargs)
         except requests.ConnectionError as e:
@@ -113,6 +179,15 @@ class PatchedClient(click.ParamType):
         return response
 
     def test_token(self) -> bool:
+        """Tests the validity of the access token by sending a request to the token test endpoint.
+        
+        This method sends a POST request to the specified token test URL with the current access token. 
+        It evaluates the response to determine if the token is valid or not, logging any errors encountered.
+        
+        Returns:
+            bool: True if the access token is valid and the response indicates a successful test, 
+                  False otherwise.
+        """
         response = self._post(
             url=self.url + "/token/test", headers={"Authorization": f"Bearer {self.access_token}"}, json={}
         )
@@ -132,6 +207,14 @@ class PatchedClient(click.ParamType):
         return body["msg"] == "ok"
 
     def __handle_telemetry_inputs(self, inputs: dict[str, Any]) -> dict:
+        """Handles telemetry inputs by filtering and modifying keys based on allowed telemetry keys.
+        
+        Args:
+            inputs dict[str, Any]: A dictionary containing telemetry inputs where keys are strings and values can be of any type.
+        
+        Returns:
+            dict: A modified dictionary with additional keys set to True for any keys not in the allowed telemetry keys.
+        """
         diff_keys = set(inputs.keys()).difference(self.ALLOWED_TELEMETRY_KEYS)
 
         inputs_copy = inputs.copy()
@@ -141,6 +224,15 @@ class PatchedClient(click.ParamType):
         return inputs_copy
 
     async def _public_telemetry(self, patchflow: str, inputs: dict[str, Any]):
+        """Sends telemetry data to a remote server.
+        
+        Args:
+            patchflow str: The identifier for the patch flow being used.
+            inputs dict[str, Any]: A dictionary containing input parameters related to the telemetry.
+        
+        Returns:
+            None: This method does not return any value.
+        """
         user_config = get_user_config()
         requests.post(
             url=self.url + "/v1/telemetry/",
@@ -161,6 +253,15 @@ class PatchedClient(click.ParamType):
         )
 
     def send_public_telemetry(self, patchflow: str, inputs: dict):
+        """Starts a new thread to send public telemetry data asynchronously.
+        
+        Args:
+            patchflow str: A string identifier for the telemetry patch flow.
+            inputs dict: A dictionary containing the inputs required for the telemetry.
+        
+        Returns:
+            None: This method does not return any value.
+        """
         try:
             _thread = Thread(target=asyncio.run, args=(self._public_telemetry(patchflow, inputs),))
             _thread.start()
@@ -169,6 +270,18 @@ class PatchedClient(click.ParamType):
 
     @contextlib.contextmanager
     def patched_telemetry(self, patchflow: str, inputs: dict):
+        """Handles the telemetry of a patchflow run, yielding control between operations.
+        
+        This method verifies the access token, tests its validity, records the patchflow run, 
+        and ensures the run is finished correctly, logging any errors encountered during the process.
+        
+        Args:
+            patchflow (str): The identifier for the patchflow being recorded.
+            inputs (dict): A dictionary containing inputs relevant to the patchflow telemetry.
+        
+        Returns:
+            generator: Yields control at various stages of the process, allowing for async handling.
+        """
         if not self.access_token:
             yield
             return
@@ -205,6 +318,16 @@ class PatchedClient(click.ParamType):
                 logger.error(f"Failed to finish patchflow run: {e}")
 
     def record_patchflow_run(self, patchflow: str, repo: Repo, inputs: dict) -> int | None:
+        """Records a Patchflow run for a given repository and inputs.
+        
+        Args:
+            patchflow str: The identifier for the patchflow being recorded.
+            repo Repo: The repository instance where the patchflow is applied.
+            inputs dict: A dictionary of inputs required for the patchflow run.
+        
+        Returns:
+            int | None: The ID of the recorded patchflow run if successful, otherwise None.
+        """
         head = get_current_branch(repo)
         branch = head.remote_head if head.is_remote() else head.name
 
@@ -225,6 +348,16 @@ class PatchedClient(click.ParamType):
         return response.json()["id"]
 
     def finish_record_patchflow_run(self, id: int, patchflow: str, repo: Repo) -> None:
+        """Finishes a Patchflow run by sending a POST request to the Patchwork API.
+        
+        Args:
+            id int: The identifier of the Patchflow run to be finished.
+            patchflow str: The name or identifier of the patchflow being applied.
+            repo Repo: The repository object containing information about the repository, particularly the remote URL.
+        
+        Returns:
+            None: This method does not return a value; it performs a side effect by sending a request and logging the outcome.
+        """
         response = self._post(
             url=self.url + "/v1/patchwork/",
             headers={"Authorization": f"Bearer {self.access_token}"},
