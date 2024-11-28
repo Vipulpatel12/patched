@@ -17,6 +17,21 @@ async def handle_openai(
     request: Request,
     response: Response,
 ) -> ChatCompletion:
+    """Handles the interaction with various language model clients for chat completion.
+    
+    This asynchronous function processes a request for chat completion using OpenAI, Google, and Anthropic language models. It begins by extracting the API key from the authorization header, then constructs clients for each language model provider. The function attempts to complete the chat using the given body parameters, handling any exceptions that may arise during the process.
+    
+    Args:
+        authorization str: The authorization header containing the Bearer token for API access.
+        request Request: The HTTP request containing the input data for the chat completion.
+        response Response: The HTTP response object to send back the completion result.
+    
+    Returns:
+        ChatCompletion: The result of the chat completion from the language model clients.
+    
+    Raises:
+        HTTPException: If an error occurs during the chat completion, it raises an HTTP exception with the appropriate status code and error details.
+    """ 
     _, _, api_key = authorization.partition("Bearer ")
     body = await request.json()
 
