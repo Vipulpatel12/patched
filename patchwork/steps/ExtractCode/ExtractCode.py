@@ -18,6 +18,18 @@ from patchwork.step import Step, StepStatus
 def get_source_code_context(
     uri: str, source_lines: list[str], start_line: int, end_line: int, context_token_length: int
 ) -> tuple[int | None, int | None]:
+    """Retrieves the source code context based on the provided line range and context token length.
+    
+    Args:
+        uri (str): The URI of the source file.
+        source_lines (list[str]): A list of source code lines.
+        start_line (int): The starting line number for retrieving context.
+        end_line (int): The ending line number for retrieving context.
+        context_token_length (int): The maximum allowable token length for the context.
+    
+    Returns:
+        tuple[int | None, int | None]: A tuple containing the start and end indices of the context if found, otherwise (None, None).
+    """
     context_strategies = ContextStrategies.get_context_strategies(*ContextStrategies.ALL)
     context_strategies = [strategy for strategy in context_strategies if strategy.is_file_supported(uri, source_lines)]
     for context_strategy in context_strategies:
@@ -39,6 +51,15 @@ def get_source_code_context(
 
 
 def parse_sarif_location(base_path: Path, location_str: str) -> Path | None:
+    """Parses a SARIF location string and attempts to resolve it to a file path based on the given base path.
+    
+    Args:
+        base_path Path: The base directory path against which the location string is resolved.
+        location_str str: The location string that contains the URI of the file to be parsed.
+    
+    Returns:
+        Path | None: The resolved file path if found, otherwise None.
+    """
     uri = urlparse(location_str)
     if uri.scheme != "file" and uri.scheme != "":
         logger.warn(f'Unsupported URI scheme "{uri.scheme}" for location: "{location_str}"')
@@ -76,6 +97,16 @@ def parse_sarif_location(base_path: Path, location_str: str) -> Path | None:
 def resolve_artifact_location(
     base_path: Path, artifact_location: dict, artifact_locations: list[Path | None]
 ) -> Path | None:
+    """Resolve the artifact location based on the provided artifact location data and list of possible locations.
+    
+    Args:
+        base_path Path: The base path used to construct the final location from the URI.
+        artifact_location dict: A dictionary containing information about the artifact, including its index and URI.
+        artifact_locations list[Path | None]: A list of potential artifact locations, which may contain None values.
+    
+    Returns:
+        Path | None: The resolved artifact location as a Path object, or None if no valid location is found.
+    """
     artifact_index = artifact_location.get("index")
     if artifact_index is not None:
         location = artifact_locations[artifact_index]
@@ -104,6 +135,14 @@ class Severity(IntEnum):
 
     @staticmethod
     def from_str(severity: str) -> "Severity":
+        """Convert a string representation of severity to a Severity enum.
+        
+        Args:
+            severity str: The string representation of the severity level.
+        
+        Returns:
+            Severity: The corresponding Severity enum instance, or Severity.UNKNOWN if the input string is invalid.
+        """
         try:
             return Severity[severity.upper()]
         except KeyError:
@@ -112,6 +151,14 @@ class Severity(IntEnum):
 
 
 def get_rule_severity(rule: dict[str:Any]) -> Severity:
+    """Determines the severity level of a given rule based on its properties.
+    
+    Args:
+        rule dict[str:Any]: A dictionary representing the rule, which contains properties that may include 'security-severity' and 'severity'.
+    
+    Returns:
+        Severity: The severity level of the rule, which can be CRITICAL, HIGH, MEDIUM, LOW, or UNKNOWN based on the defined thresholds and properties.
+    """
     properties = rule.get("properties", {})
 
     try:
@@ -137,6 +184,15 @@ def get_rule_severity(rule: dict[str:Any]) -> Severity:
 
 
 def get_severity(result, reporting_descriptors):
+    """Determines the severity level of a given result based on its properties and associated reporting descriptors.
+    
+    Args:
+        result (dict): A dictionary representing the result, which may contain properties, rule information, and severity level.
+        reporting_descriptors (list): A list of reporting descriptors that provide additional context and rules for severity levels.
+    
+    Returns:
+        Severity: The determined severity level based on properties and rules; defaults to Severity.UNKNOWN if no severity can be determined.
+    """
     properties = result.get("properties", {})
     properties_severity = properties.get("severity") or properties.get("Severity")
     if properties_severity is not None:
@@ -177,6 +233,19 @@ def get_severity(result, reporting_descriptors):
 def transform_sarif_results(
     sarif_data: dict, base_path: Path, context_length: int, vulnerability_limit: int, severity_threshold: Severity
 ) -> dict[tuple[str, int, int, int], list[str]]:
+    """Transforms SARIF results into a structured format for improved readability and context extraction.
+    
+    Args:
+        sarif_data dict: The SARIF data containing results and additional information.
+        base_path Path: The base file path for resolving artifact locations.
+        context_length int: The number of lines of context to extract around a code issue.
+        vulnerability_limit int: The maximum number of vulnerabilities to process before stopping.
+        severity_threshold Severity: The minimum severity level to consider for vulnerabilities.
+    
+    Returns:
+        dict[tuple[str, int, int, int], list[str]]: A dictionary mapping file paths and line numbers 
+        (with source code context) to lists of issue descriptions.
+    """
     total_results = len([1 for run in sarif_data.get("runs", []) for result in run.get("results", [])])
     logger.info(f"Found {total_results} results from SARIF data")
 
@@ -274,6 +343,14 @@ class ExtractCode(Step):
     required_keys = {"sarif_values"}
 
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class, validating input parameters and setting up internal attributes.
+        
+        Args:
+            inputs dict: A dictionary containing configuration parameters, including required keys and optional settings.
+        
+        Returns:
+            None: This method does not return a value; it initializes instance variables based on the provided inputs.
+        """  
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -285,6 +362,14 @@ class ExtractCode(Step):
         self.severity_threshold = Severity.from_str(inputs.get("severity", "UNKNOWN"))
 
     def run(self) -> dict:
+        """Executes the run process, transforming and grouping SARIF results, and prepares a list of files to patch based on vulnerability information.
+        
+        Args:
+            self: Reference to the instance of the class.
+        
+        Returns:
+            dict: A dictionary containing 'files_to_patch' as a list of dictionaries with details about affected code contexts for each vulnerability found.
+        """  
         base_path = Path.cwd()
 
         grouped_messages = transform_sarif_results(
