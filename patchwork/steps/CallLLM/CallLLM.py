@@ -30,6 +30,14 @@ class _InnerCallLLMResponse:
 
 class CallLLM(Step, input_class=CallLLMInputs, output_class=CallLLMOutputs):
     def __init__(self, inputs: dict):
+        """Initializes the LLM client and loads prompts from the given input parameters.
+        
+        Args:
+            inputs dict: A dictionary containing initialization parameters, including API keys, prompt file paths, model configurations, and additional client settings.
+        
+        Returns:
+            None: This constructor does not return a value but initializes the instance with the provided configuration and loaded prompts.
+        """ 
         super().__init__(inputs)
         # Set 'openai_key' from inputs or environment if not already set
         inputs.setdefault("openai_api_key", os.environ.get("OPENAI_API_KEY"))
@@ -93,6 +101,18 @@ class CallLLM(Step, input_class=CallLLMInputs, output_class=CallLLMOutputs):
 
     def __persist_to_file(self, contents):
         # Convert relative path to absolute path
+        """Persist the given contents to a specified file in JSON format.
+        
+        This method writes the contents to a file at the path specified by 
+        'save_responses_to_file'. If the file does not exist, it will be created, 
+        otherwise, the new content will be appended.
+        
+        Args:
+            contents list: A list of responses corresponding to each prompt.
+        
+        Returns:
+            None: This method does not return any value, it only persists data to a file.
+        """
         file_path = os.path.abspath(self.save_responses_to_file)
 
         mode = "a" if os.path.exists(file_path) else "w"
@@ -108,6 +128,17 @@ class CallLLM(Step, input_class=CallLLMInputs, output_class=CallLLMOutputs):
                 f.write(json.dumps(data) + "\n")
 
     def run(self) -> dict:
+        """Executes the process of handling prompts and collects responses from an external service.
+        
+        This method checks for the presence of prompts, respects the defined call limit, and retrieves 
+        responses accordingly. It also optionally saves the responses to a file if specified.
+        
+        Args:
+            self: The instance of the class which contains prompts and configuration.
+        
+        Returns:
+            dict: A dictionary containing the collected OpenAI responses, request tokens, and response tokens.
+        """
         prompt_length = len(self.prompts)
         if prompt_length == 0:
             self.set_status(StepStatus.SKIPPED, "No prompts to process")
@@ -138,6 +169,14 @@ class CallLLM(Step, input_class=CallLLMInputs, output_class=CallLLMOutputs):
         return dict(openai_responses=openai_responses, request_tokens=request_tokens, response_tokens=response_tokens)
 
     def __call(self, prompts: list[list[dict]]) -> list[_InnerCallLLMResponse]:
+        """Processes a list of prompts, interacts with a client to get responses, and returns structured response objects.
+        
+        Args:
+            prompts list[list[dict]]: A list of prompt messages where each prompt is a list of dictionaries representing the message content.
+        
+        Returns:
+            list[_InnerCallLLMResponse]: A list of responses structured as _InnerCallLLMResponse objects containing the prompt, response content, and token usage.
+        """
         contents: list[_InnerCallLLMResponse] = []
 
         # Parse model arguments
@@ -184,6 +223,14 @@ class CallLLM(Step, input_class=CallLLMInputs, output_class=CallLLMOutputs):
         return contents
 
     def __parse_model_args(self) -> dict:
+        """Parses the model arguments and converts string representations of integers, floats, and booleans to their respective types.
+        
+        Args:
+            self: The instance of the class containing the model_args attribute.
+        
+        Returns:
+            dict: A dictionary of model arguments with values converted to appropriate types.
+        """
         model_args = self.model_args
         # List of arguments in their respective types
         int_args = {"max_tokens", "n", "top_logprobs"}
