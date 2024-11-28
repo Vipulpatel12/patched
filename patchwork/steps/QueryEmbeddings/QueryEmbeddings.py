@@ -13,6 +13,17 @@ class QueryEmbeddings(Step):
     required_keys = {"embedding_name", "texts"}
 
     def __init__(self, inputs: dict):
+        """Initialize a new instance of the class, ensuring that required input keys are present and setting up a collection with a specified embedding function.
+        
+        Args:
+            inputs dict: A dictionary containing necessary parameters, including "embedding_name", "texts", and optional "top_k" and "token_limit".
+        
+        Raises:
+            ValueError: If any required keys specified in 'required_keys' are missing from the inputs.
+        
+        Returns:
+            None
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -26,6 +37,14 @@ class QueryEmbeddings(Step):
         self.token_limit = inputs.get("token_limit", 4096)
 
     def run(self):
+        """Executes a query to retrieve and process embedding results based on specified texts and constraints.
+        
+        Args:
+            self: The instance of the class containing the method.
+            
+        Returns:
+            dict: A dictionary containing a list of processed embedding results sorted by distance.
+        """  
         results = self.collection.query(
             query_texts=self.texts, n_results=self.top_k, include=["metadatas", "distances"]
         )
