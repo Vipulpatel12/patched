@@ -76,6 +76,15 @@ def find_dependency_usage(directory, dependency, language, methods):
 
 class AnalyzeImpact(Step):
     def __init__(self, inputs: dict):
+        """Initializes the class with the provided inputs.
+        
+        Args:
+            inputs dict: A dictionary containing required keys for initialization.
+                Must include 'extracted_responses', 'library_name', and 'platform_type'.
+        
+        Raises:
+            ValueError: If any of the required keys are missing from the inputs dictionary.
+        """
         super().__init__(inputs)
         required_keys = {"extracted_responses", "library_name", "platform_type"}
         if not all(key in inputs.keys() for key in required_keys):
@@ -84,6 +93,16 @@ class AnalyzeImpact(Step):
         self.inputs = inputs
 
     def run(self) -> dict:
+        """Executes the process of extracting impacted methods from responses and determining the files that need to be patched.
+        
+        This method checks for extracted responses related to library usage, identifies impacted methods from those responses, and compiles a list of files that require modifications based on the found methods.
+        
+        Args:
+            self: The instance of the class containing this method.
+        
+        Returns:
+            dict: A dictionary containing a list of files to patch based on the impacted methods found in the extracted responses.
+        """ 
         extracted_responses = self.inputs["extracted_responses"]
         if len(extracted_responses) == 0:
             self.set_status(StepStatus.SKIPPED, "No extracted responses found")
