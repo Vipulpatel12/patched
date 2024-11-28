@@ -241,6 +241,14 @@ class PythonStrategy(ContextStrategyProtocol):
 
     @property
     def language(self) -> PythonLanguage:
+        """Creates and returns an instance of the PythonLanguage class.
+        
+        Args:
+            None
+        
+        Returns:
+            PythonLanguage: An instance of the PythonLanguage class.
+        """
         return PythonLanguage()
 
 

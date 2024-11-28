@@ -16,6 +16,16 @@ chevron.render.__globals__["_html_escape"] = lambda string: string
 
 
 def _find_by_prompt_template_file(prompt_template_file: str | None, prompt_id: str | None) -> list[dict] | None:
+    """Retrieves a list of prompt templates from a specified file based on the provided prompt ID.
+    
+    Args:
+        prompt_template_file (str | None): The path to the JSON file containing prompt templates.
+        prompt_id (str | None): The ID of the prompt to find within the template file.
+    
+    Returns:
+        list[dict] | None: A list of prompts associated with the given prompt ID, or None if the file does not exist, 
+        if there is a JSON decode error, if the prompt ID is not found, or if the prompts key is absent.
+    """
     if prompt_template_file is None or prompt_id is None:
         return None
 
@@ -46,6 +56,14 @@ def _find_by_prompt_template_file(prompt_template_file: str | None, prompt_id: s
 
 class PreparePrompt(Step):
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class, setting up the prompt template and prompt values based on the provided inputs.
+        
+        Args:
+            inputs dict: A dictionary containing inputs necessary for initializing the instance, including keys for prompt templates and values.
+        
+        Returns:
+            None: This method does not return a value, it only initializes the instance with the provided inputs.
+        """ 
         super().__init__(inputs)
         self.prompt_template = _find_by_prompt_template_file(
             inputs.get(PROMPT_TEMPLATE_FILE_KEY), inputs.get("prompt_id")
@@ -74,6 +92,14 @@ class PreparePrompt(Step):
         self.prompt_values = prompt_values
 
     def run(self) -> dict:
+        """Executes the prompt generation process based on the provided prompt values.
+        
+        Args:
+            self (Object): The instance of the class containing the prompt values and template.
+        
+        Returns:
+            dict: A dictionary containing a list of generated prompts, or an empty list if no prompt values were provided.
+        """
         if len(self.prompt_values) == 0:
             self.set_status(StepStatus.SKIPPED, "No prompt values provided")
             return dict(prompts=[])

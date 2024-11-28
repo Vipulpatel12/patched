@@ -29,6 +29,18 @@ class StepTypeConfig(object):
         xor_op: List[str] = None,
         msg: str = "",
     ):
+        """Initializes a new instance of the class.
+        
+        Args:
+            is_config (bool): Indicates whether the instance is a configuration object. Defaults to False.
+            is_path (bool): Indicates whether the instance represents a path. Defaults to False.
+            and_op (List[str]): A list of strings representing AND operations. Defaults to an empty list if None.
+            or_op (List[str]): A list of strings representing OR operations. Defaults to an empty list if None.
+            xor_op (List[str]): A list of strings representing XOR operations. Defaults to an empty list if None.
+            msg (str): A message associated with the instance. Defaults to an empty string.
+        
+        Returns:
+            None: This constructor does not return a value.
         self.is_config = is_config
         self.is_path: bool = is_path
         self.and_op: List[str] = and_op or []
@@ -38,6 +50,15 @@ class StepTypeConfig(object):
 
 
 def validate_steps_with_inputs(keys: Iterable[str], *steps: Type[Step]) -> None:
+    """Validates a series of steps against a set of input keys and reports any errors found.
+    
+    Args:
+        keys Iterable[str]: A collection of keys to validate against the steps.
+        *steps Type[Step]: A variable number of step classes to validate using the provided keys.
+    
+    Returns:
+        None: Raises a ValueError if any of the validation steps produce errors.
+    """
     current_keys = set(keys)
     report = {}
     for step in steps:
@@ -64,6 +85,16 @@ __NOT_GIVEN = TypedDict
 def validate_step_type_config_with_inputs(
     key_name: str, input_keys: Set[str], step_type_config: StepTypeConfig
 ) -> Tuple[bool, str]:
+    """Validates the configuration of a step type based on input keys and the specified constraints in the step type configuration.
+    
+    Args:
+        key_name (str): The key name to validate against the input keys.
+        input_keys (Set[str]): A set of input keys provided for validation.
+        step_type_config (StepTypeConfig): The configuration object that defines validation rules (and_op, or_op, xor_op) and associated messages.
+    
+    Returns:
+        Tuple[bool, str]: A tuple containing a boolean indicating the validation result and a message providing details about any validation failures or the configured message.
+    """
     is_key_set = key_name in input_keys
 
     and_keys = set(step_type_config.and_op)
@@ -106,6 +137,15 @@ def validate_step_type_config_with_inputs(
 
 
 def validate_step_with_inputs(input_keys: Set[str], step: Type[Step]) -> Tuple[Set[str], Dict[str, str]]:
+    """Validates the input keys against the expected input model of a given step and generates a report of missing or mismatched inputs.
+    
+    Args:
+        input_keys Set[str]: A set of keys provided as input for validation.
+        step Type[Step]: The step class that contains expected input and output models.
+    
+    Returns:
+        Tuple[Set[str], Dict[str, str]]: A tuple containing a set of required output keys and a dictionary reporting any validation issues with input keys.
+    """
     module_path, _, _ = step.__module__.rpartition(".")
     step_name = step.__name__
     type_module = importlib.import_module(f"{module_path}.typed")
@@ -140,6 +180,14 @@ def validate_step_with_inputs(input_keys: Set[str], step: Type[Step]) -> Tuple[S
 
 
 def find_step_type_config(python_type: type) -> Optional[StepTypeConfig]:
+    """Finds the configuration associated with a specific step type based on the provided Python type.
+    
+    Args:
+        python_type type: The Python type for which to find the step type configuration.
+    
+    Returns:
+        Optional[StepTypeConfig]: The configuration for the step type if found, otherwise None.
+    """
     annotated = find_annotated(python_type)
     if annotated is None:
         return None
@@ -151,6 +199,18 @@ def find_step_type_config(python_type: type) -> Optional[StepTypeConfig]:
 
 
 def find_annotated(python_type: Type) -> Optional[Type[Annotated]]:
+    """Recursively searches for the first occurrence of an Annotated type 
+    within the provided Python type. If the given type is an Annotated type, 
+    it returns the type itself. If there are type arguments, it checks 
+    each argument for an Annotated type until one is found.
+    
+    Args:
+        python_type Type: The type to search for Annotated types.
+    
+    Returns:
+        Optional[Type[Annotated]]: The found Annotated type or None 
+        if no Annotated type is found.
+    """
     origin = get_origin(python_type)
     args = get_args(python_type)
     if origin is Annotated:

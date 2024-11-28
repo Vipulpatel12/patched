@@ -8,11 +8,29 @@ from patchwork.steps.PreparePR.PreparePR import PreparePR
 
 class PR(Step, input_class=PRInputs, output_class=PROutputs):
     def __init__(self, inputs):
+        """Initializes the instance of the class with the provided inputs and calls the method to handle modified code files.
+        
+        Args:
+            inputs (any): The input data required for initializing the class.
+        
+        Returns:
+            None
+        """
         super().__init__(inputs)
         self.inputs = inputs
         self.__handle_modified_code_files()
 
     def __handle_modified_code_files(self):
+        """Handles the processing of modified code files and updates the internal state with the converted file information.
+        
+        This method checks for any existing modified code files in the input. If none are found, it retrieves the modified files from the input, converts their structure based on defined keys, and stores the results in the internal state.
+        
+        Args:
+            self: The instance of the class which manages the inputs and the state.
+        
+        Returns:
+            None: This method does not return a value; it modifies the instance's inputs directly.
+        """
         if self.inputs.get("modified_code_files") is not None:
             return
 
@@ -46,6 +64,18 @@ class PR(Step, input_class=PRInputs, output_class=PROutputs):
         self.inputs["modified_code_files"] = modified_files
 
     def run(self):
+        """Executes the workflow for committing changes, preparing, and creating a pull request.
+        
+        This method orchestrates the process of committing changes, preparing the content for a pull request,
+        and finally creating the pull request itself. It updates the status at each stage of the workflow.
+        
+        Args:
+            self: The instance of the class which contains input parameters for the operations.
+        
+        Returns:
+            dict: A dictionary containing information about the pull request, including the base branch,
+                  target branch, pull request URL, number, title, and body.
+        """
         commit_changes = CommitChanges(self.inputs)
         commit_changes_output = commit_changes.run()
         self.set_status(commit_changes.status, commit_changes.status_message)

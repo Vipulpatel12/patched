@@ -21,11 +21,32 @@ from patchwork.steps.SimplifiedLLM.SimplifiedLLM import SimplifiedLLM
     ],
 )
 def test_invalid(inputs):
+    """Tests the behavior of the SimplifiedLLM class when provided invalid inputs.
+    
+    Args:
+        inputs (Any): The input data that is expected to cause a ValueError.
+    
+    Returns:
+        None: This function does not return a value but asserts that a ValueError is raised.
+    """
     with pytest.raises(ValueError):
         SimplifiedLLM(inputs)
 
 
 def test_non_json_run(mocker):
+    """Test the non-JSON run functionality of the SimplifiedLLM class.
+    
+    This test verifies the integration of the PreparePrompt, CallLLM, and ExtractModelResponse components 
+    within the SimplifiedLLM class when processing inputs and ensures that the expected interactions and 
+    parameters are correctly handled.
+    
+    Args:
+        mocker (pytest-mock.MockerFixture): The mock fixture from pytest-mock used to create mock objects 
+                                             and patch methods for testing.
+    
+    Returns:
+        None: This function performs assertions and does not return any value.
+    """
     inputs = dict(
         prompt_user="user",
         prompt_system="system",
@@ -75,6 +96,14 @@ def test_non_json_run(mocker):
 
 
 def test_json_run(mocker):
+    """Test the functionality of the SimplifiedLLM class when processing inputs in JSON format.
+    
+    Args:
+        mocker (pytest-mock.MockerFixture): The mocker fixture provided by pytest for mocking dependencies and functions.
+    
+    Returns:
+        None: This function does not return any value; it asserts conditions to validate the behavior of the code.
+    """
     inputs = dict(
         prompt_user="user",
         prompt_system="system",

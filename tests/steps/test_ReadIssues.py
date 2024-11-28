@@ -20,6 +20,17 @@ from patchwork.steps import ReadIssues
 )
 def test_read_issues(mocker, inputs_extra, method_path, issue_texts):
     # Set up
+    """Tests the functionality of the ReadIssues class's run method by mocking the SCM client.
+    
+    Args:
+        mocker: The mocker fixture used for creating mock objects and patching.
+        inputs_extra (dict): Additional input parameters to be combined with base inputs.
+        method_path (str): The path of the method to be mocked for the SCM client.
+        issue_texts (dict): A dictionary containing the expected issue texts returned by the mocked SCM client.
+    
+    Returns:
+        None: This function does not return a value, but will assert the correctness of the ReadIssues run method output.
+    """
     base_inputs = {"issue_url": "https://example.com/issue"}
     inputs = {**base_inputs, **inputs_extra}
 

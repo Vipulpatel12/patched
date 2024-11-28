@@ -10,6 +10,14 @@ from patchwork.steps.PreparePrompt.PreparePrompt import PreparePrompt
 
 class LLM(Step):
     def __init__(self, inputs):
+        """Initializes the class and checks for required input keys.
+        
+        Args:
+            inputs dict: A dictionary containing the input data to be validated.
+        
+        Raises:
+            ValueError: If any required keys are missing from the provided input data.
+        """
         super().__init__(inputs)
         missing_keys = LLMInputs.__required_keys__.difference(set(inputs.keys()))
         if len(missing_keys) > 0:
@@ -18,6 +26,18 @@ class LLM(Step):
         self.inputs = inputs
 
     def run(self) -> dict:
+        """Executes a series of tasks to process prompts and extract responses from a language model.
+        
+        This method orchestrates the flow from preparing prompts, calling the language model (LLM),
+        and extracting responses, ultimately returning a structured dictionary with relevant outputs.
+        
+        Args:
+            self: The instance of the class, which contains the inputs necessary for processing.
+        
+        Returns:
+            dict: A dictionary containing the processed information, including prompts, 
+                  responses from the LLM, extracted responses, and token counts.
+        """
         prepare_prompt_outputs = PreparePrompt(self.inputs).run()
         call_llm_outputs = CallLLM(
             dict(

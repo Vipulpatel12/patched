@@ -16,6 +16,14 @@ from patchwork.common.client.llm.protocol import NOT_GIVEN, LlmClient, NotGiven
 
 @functools.lru_cache
 def _cached_list_models_from_openai(api_key):
+    """Retrieves a unique set of model IDs from the OpenAI API using the provided API key.
+    
+    Args:
+        api_key str: The API key used to authenticate with the OpenAI API.
+    
+    Returns:
+        set: A set of unique model IDs retrieved from the OpenAI API.
+    """
     client = OpenAI(api_key=api_key)
     sync_page = client.models.list()
 
@@ -37,6 +45,16 @@ class OpenAiLlmClient(LlmClient):
     }
 
     def __init__(self, api_key: str, base_url=None, **kwargs):
+        """Initialize an instance of the class.
+        
+        Args:
+            api_key str: The API key used to authenticate with the service.
+            base_url str, optional: The base URL for the API. Defaults to None.
+            **kwargs: Additional keyword arguments passed to the OpenAI client.
+        
+        Returns:
+            None: This method does not return a value.
+        """ 
         self.api_key = api_key
         self.base_url = base_url
         self.client = OpenAI(api_key=api_key, base_url=base_url, **kwargs)
@@ -44,9 +62,29 @@ class OpenAiLlmClient(LlmClient):
     def __is_not_openai_url(self):
         # Some providers/apis only implement the chat completion endpoint.
         # We mainly use this to skip using the model endpoints.
+        """Checks if the base URL is not the OpenAI API endpoint.
+        
+        This method determines whether the current base URL is valid and does not point to the OpenAI chat completion endpoint. It is useful for filtering out OpenAI-specific URLs when interacting with different providers or APIs.
+        
+        Args:
+            None
+        
+        Returns:
+            bool: True if the base URL is valid and not equal to the OpenAI API endpoint, False otherwise.
         return self.base_url is not None and self.base_url != "https://api.openai.com/v1"
 
     def get_models(self) -> set[str]:
+        """Retrieves a set of models from the OpenAI API if the URL is valid.
+        
+        This method checks whether the API URL is an OpenAI URL. If it isn't, an empty set is returned.
+        If it is a valid OpenAI URL, it proceeds to fetch and return the cached list of models using the provided API key.
+        
+        Args:
+            self: The instance of the class calling this method.
+        
+        Returns:
+            set[str]: A set of model names retrieved from the OpenAI API or an empty set if the URL is not valid.
+        """
         if self.__is_not_openai_url():
             return set()
 
@@ -54,15 +92,40 @@ class OpenAiLlmClient(LlmClient):
 
     def is_model_supported(self, model: str) -> bool:
         # might not implement model endpoint
+        """Checks if the specified model is supported by the system.
+        
+        Args:
+            model str: The name of the model to be checked for support.
+        
+        Returns:
+            bool: True if the model is supported, False otherwise.
+        """
         if self.__is_not_openai_url():
             return True
         return model in self.get_models()
 
     def __get_model_limits(self, model: str) -> int:
+        """Retrieves the model limits for a given model name.
+        
+        Args:
+            model str: The name of the model for which to retrieve the limits.
+        
+        Returns:
+            int: The limit associated with the specified model, or a default of 128,000 if the model is not found.
+        """
         return self.__MODEL_LIMITS.get(model, 128_000)
 
     def is_prompt_supported(self, messages: Iterable[ChatCompletionMessageParam], model: str) -> int:
         # might not implement model endpoint
+        """Checks if the given prompt messages are supported by the specified model based on token limits.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: A collection of messages to be sent to the model.
+            model str: The name of the model to check prompt support for.
+        
+        Returns:
+            int: The remaining token limit for the model, -1 if the prompt exceeds the model's token capacity, or 1 if the model is not an OpenAI model.
+        """
         if self.__is_not_openai_url():
             return 1
 
@@ -80,6 +143,15 @@ class OpenAiLlmClient(LlmClient):
     def truncate_messages(
         self, messages: Iterable[ChatCompletionMessageParam], model: str
     ) -> Iterable[ChatCompletionMessageParam]:
+        """Truncates a list of chat messages to ensure compliance with model constraints.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: An iterable containing chat messages to be truncated.
+            model str: The identifier of the model used to determine truncation limits.
+        
+        Returns:
+            Iterable[ChatCompletionMessageParam]: An iterable containing the truncated chat messages.
+        """
         return self._truncate_messages(self, messages, model)
 
     def chat_completion(
@@ -98,6 +170,26 @@ class OpenAiLlmClient(LlmClient):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
     ) -> ChatCompletion:
+        """Generates a chat completion response based on the provided messages and model parameters.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: A collection of messages to form the context for the chat completion.
+            model str: The identifier of the model to be used for generating completions.
+            frequency_penalty Optional[float] | NotGiven: A penalty parameter to adjust the frequency of tokens in the response.
+            logit_bias Optional[Dict[str, int]] | NotGiven: A dictionary to modify the likelihood of specific tokens appearing in the response.
+            logprobs Optional[bool] | NotGiven: Whether to include log probabilities of the sampled tokens.
+            max_tokens Optional[int] | NotGiven: The maximum number of tokens to generate in the response.
+            n Optional[int] | NotGiven: The number of chat completions to generate for the given prompt.
+            presence_penalty Optional[float] | NotGiven: A penalty parameter that influences the variety of topics in the response.
+            response_format dict | completion_create_params.ResponseFormat | NotGiven: The format of the response. 
+            stop Union[Optional[str], List[str]] | NotGiven: A stopping condition that determines when the completion should end.
+            temperature Optional[float] | NotGiven: Parameter that controls the randomness of the output.
+            top_logprobs Optional[int] | NotGiven: The number of top log probabilities to consider during sampling.
+            top_p Optional[float] | NotGiven: Cumulative probability for nucleus sampling.
+        
+        Returns:
+            ChatCompletion: The generated chat completion response.
+        """
         input_kwargs = dict(
             messages=messages,
             model=model,

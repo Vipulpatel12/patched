@@ -16,6 +16,14 @@ _DEFAULT_PROMPT_JSON = Path(__file__).parent / "default_prompt.json"
 
 class GenerateUnitTests(Step):
     def __init__(self, inputs):
+        """Initializes an instance of the class by processing and validating the provided inputs.
+        
+        Args:
+            inputs dict: A dictionary containing initial input parameters for initialization.
+        
+        Returns:
+            None: This method does not return a value but initializes the instance with processed inputs.
+        """
         super().__init__(inputs)
 
         final_inputs = yaml.safe_load(_DEFAULT_INPUT_FILE.read_text())
@@ -42,6 +50,14 @@ class GenerateUnitTests(Step):
         self.inputs = final_inputs
 
     def run(self):
+        """Executes a series of operations to process inputs, generate output files, and update inputs with modification results.
+        
+        Args:
+            self: The instance of the class that contains this method.
+        
+        Returns:
+            dict: The updated inputs dictionary containing results from processing, including modified code files and pull request details.
+        """
         outputs = CallCode2Prompt(self.inputs).run()
         new_file_name = f"test_file.{self.inputs['test_file_extension']}"
         new_file_path = Path(outputs['uri']).with_name(new_file_name)

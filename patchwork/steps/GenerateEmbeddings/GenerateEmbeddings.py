@@ -10,10 +10,29 @@ from patchwork.step import Step
 
 
 def filter_by_extension(file, extensions):
+    """Checks if a given file has one of the specified extensions.
+    
+    Args:
+        file (str): The name of the file to be checked.
+        extensions (list): A list of file extensions to filter by.
+    
+    Returns:
+        bool: True if the file ends with one of the specified extensions; otherwise, False.
+    """
     return any(file.endswith(ext) for ext in extensions)
 
 
 def split_text(document_text: str, chunk_size: int, overlap: int) -> list[str]:
+    """Splits the input text into smaller chunks with specified size and overlap.
+    
+    Args:
+        document_text (str): The text document to be split into chunks.
+        chunk_size (int): The desired size of each chunk.
+        overlap (int): The number of overlapping characters between consecutive chunks.
+    
+    Returns:
+        list[str]: A list of text chunks resulting from the split operation.
+    """
     char_length = len(document_text)
     chunks = []
     for i in range(0, char_length, chunk_size - overlap):
@@ -27,6 +46,15 @@ def split_text(document_text: str, chunk_size: int, overlap: int) -> list[str]:
 
 
 def delete_collection(client, collection_name):
+    """Deletes a specified collection from the client.
+    
+    Args:
+        client (Client): The client instance used to manage collections.
+        collection_name (str): The name of the collection to be deleted.
+    
+    Returns:
+        None: This method does not return a value.
+    """
     for collection in client.list_collections():
         if collection.name == collection_name:
             client.delete_collection(collection_name)
@@ -37,6 +65,17 @@ class GenerateEmbeddings(Step):
     required_keys = {"embedding_name", "documents"}
 
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class with the provided inputs.
+        
+        Args:
+            inputs dict: A dictionary containing the necessary parameters to initialize the instance, including required keys, embedding name, documents, and optional chunk and overlap sizes.
+        
+        Raises:
+            ValueError: If any of the required keys are missing in the provided inputs.
+        
+        Returns:
+            None
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -56,6 +95,16 @@ class GenerateEmbeddings(Step):
         self.overlap_size = inputs.get("overlap_size", 2000)
 
     def run(self) -> dict:
+        """Run the processing and upserting of documents and embeddings.
+        
+        This method extracts text and embeddings from a collection of documents, splits the text into chunks, generates unique IDs for each document chunk and embedding, and then upserts them into a specified collection.
+        
+        Args:
+            self: The instance of the class that holds the documents, chunk size, overlap size, and collection to upsert into.
+        
+        Returns:
+            dict: An empty dictionary indicating the completion of the processing.
+        """
         document_ids = []
         documents = []
         document_metadatas = []

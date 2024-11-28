@@ -13,6 +13,15 @@ from patchwork.steps.FilterBySimilarity.typed import (
 
 class FilterBySimilarity(Step, input_class=FilterBySimilarityInputs, output_class=FilterBySimilarityOutputs):
     def __init__(self, inputs):
+        """Initializes the class with input parameters and parses necessary values.
+        
+        Args:
+            inputs dict: A dictionary containing input parameters which must include 'list' and 'keywords'.
+                          It may also contain 'keys' and 'top_k', with 'top_k' defaulting to 10 if not provided.
+        
+        Returns:
+            None: The constructor does not return a value.
+        """
         super().__init__(inputs)
 
         self.list = inputs["list"]
@@ -22,6 +31,14 @@ class FilterBySimilarity(Step, input_class=FilterBySimilarityInputs, output_clas
 
     @staticmethod
     def __parse_keys(keys: list[str] | str | None) -> list[str] | None:
+        """Parses input keys, which can be a string, a list of strings, or None, and returns a list of strings.
+        
+        Args:
+            keys (list[str] | str | None): The keys to be parsed. This can be a single string, a list of strings, or None.
+        
+        Returns:
+            list[str] | None: A list of parsed keys if the input is a string or a list; otherwise, None if the input is None.
+        """
         if keys is None:
             return None
 
@@ -34,6 +51,16 @@ class FilterBySimilarity(Step, input_class=FilterBySimilarityInputs, output_clas
         return keys
 
     def run(self):
+        """Executes the main logic of the process, calculating similarity scores for items in the list based on the provided keywords.
+         
+        The method processes a list of items, computes their text representations based on specified keys, and evaluates their similarity to a set of keywords using TF-IDF vectorization.
+        
+        Args:
+            self: The instance of the class containing the method, which includes attributes such as `list`, `keys`, `keywords`, and `top_k`.
+        
+        Returns:
+            dict: A dictionary containing a key 'result_list' that holds a list of items sorted by their average similarity score, limited to the top_k items.
+        """
         if len(self.list) == 0:
             self.set_status(StepStatus.SKIPPED, "List is empty")
             return dict()

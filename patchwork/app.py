@@ -30,6 +30,16 @@ _PATCHFLOW_MODULE_NAME = "patchwork.patchflows"
 
 
 def _get_patchflow_names(base_path: Path | str | None) -> Iterable[str]:
+    """Retrieve patchflow names from a specified directory path.
+    
+    Args:
+        base_path (Path | str | None): The path to the directory from which to retrieve the patchflow names. 
+                                         Can be a Path object, a string representing the path, or None.
+    
+    Returns:
+        Iterable[str]: A sorted list of patchflow names derived from subdirectories that contain a corresponding 
+                       Python file named '<subdirectory_name>.py'.
+    """
     names = []
     if base_path is None:
         return names
@@ -45,6 +55,19 @@ def _get_patchflow_names(base_path: Path | str | None) -> Iterable[str]:
 
 
 def list_option_callback(ctx: click.Context, param: click.Parameter, value: str | None) -> None:
+    """Handles the callback for listing available patchflow options.
+    
+    This function is designed to collect and display the names of available patchflows
+    from specified directories based on user input.
+    
+    Args:
+        ctx click.Context: The context object containing information about the execution state and configuration.
+        param click.Parameter: The parameter object associated with the callback.
+        value str | None: The input value provided by the user; if None or empty, the function will exit early.
+    
+    Returns:
+        None: This function does not return a value, but it will print the patchflow names and exit the program.
+    """
     if not value or ctx.resilient_parsing:
         return
 
@@ -60,6 +83,15 @@ def list_option_callback(ctx: click.Context, param: click.Parameter, value: str 
 
 
 def find_patchflow(possible_module_paths: Iterable[str], patchflow: str) -> Any | None:
+    """Attempts to find and load a specified patchflow from a list of possible module paths.
+    
+    Args:
+        possible_module_paths Iterable[str]: An iterable of strings representing paths to potential modules or files.
+        patchflow str: The name of the patchflow to be located within the specified modules.
+    
+    Returns:
+        Any | None: The found patchflow object if successful; otherwise, returns None.
+    """
     for module_path in possible_module_paths:
         try:
             spec = importlib.util.spec_from_file_location("custom_module", module_path)
@@ -85,6 +117,18 @@ def find_patchflow(possible_module_paths: Iterable[str], patchflow: str) -> Any 
 
 
 def setup_cli():
+    """Sets up the command-line interface (CLI) by configuring signal handling.
+    
+    This function registers a signal handler for SIGINT (interrupt signal) 
+    that logs a message indicating that the signal was received and then exits 
+    the program with a status code of 1.
+    
+    Args:
+        None
+    
+    Returns:
+        None
+    """
     def sigint_handler(signum, frame):
         logger.info("Received SIGINT, exiting")
         exit(1)
@@ -156,6 +200,22 @@ def cli(
     disable_telemetry: bool,
     debug: bool,
 ):
+    """Executes a command-line interface (CLI) for the Patchwork tool, initializing logging and processing user inputs for a specified patchflow.
+    
+    Args:
+        log (str): Path to the log file for recording the execution processes.
+        patchflow (str): The name of the patchflow to execute, which may optionally include the module path.
+        opts (list[str]): List of options provided by the user, which can include key-value pairs.
+        config (str | None): Path to the configuration file or directory; if None, defaults are used.
+        output (str | None): Path to the output file where results will be written; if None, output is not saved.
+        data_format (str): The format in which to serialize the output data; supported formats include JSON.
+        patched_api_key (str | None): An optional API key for the patched client; if None, defaults are used.
+        disable_telemetry (bool): Flag to disable telemetry data transmission; if True, telemetry is not sent.
+        debug (bool): Flag to enable debug mode, providing additional logging output during execution.
+    
+    Returns:
+        None: This function does not return a value; it performs operations directly related to CLI functionality.
+    """
     setup_cli()
 
     init_cli_logger(log)

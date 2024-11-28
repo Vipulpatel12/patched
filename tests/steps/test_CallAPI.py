@@ -20,6 +20,19 @@ from patchwork.steps.CallAPI.CallAPI import CallAPI
     ],
 )
 def test_call_api_outputs(httpserver, path, method, headers, body, return_code):
+    """Test the CallAPI function by simulating an HTTP server that returns a predefined response.
+    
+    Args:
+        httpserver (object): The HTTP server instance used to serve the content.
+        path (str): The path of the API endpoint to test.
+        method (str): The HTTP method to use for the API call (e.g., 'GET', 'POST').
+        headers (dict or str): Optional headers to include in the API request.
+        body (str): Optional body content to include in the API request.
+        return_code (int): The expected HTTP status code returned by the API call.
+    
+    Returns:
+        None: This function asserts the expected behaviors and does not return a value.
+    """
     response_body = "some data"
     response_headers = {"Content-Type": "text/plain"}
     httpserver.serve_content(content=response_body, headers=response_headers, code=return_code)

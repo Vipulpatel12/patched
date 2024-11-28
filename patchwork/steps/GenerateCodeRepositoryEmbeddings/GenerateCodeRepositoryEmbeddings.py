@@ -20,6 +20,14 @@ from patchwork.steps.GenerateEmbeddings.GenerateEmbeddings import GenerateEmbedd
 
 
 def filter_files(files: Iterable[str]) -> set[str]:
+    """Filters a list of file paths to exclude those containing directories from a blacklist.
+    
+    Args:
+        files Iterable[str]: An iterable collection of file paths as strings to be filtered.
+    
+    Returns:
+        set[str]: A set of file paths that do not contain any directories from the blacklist.
+    """
     rv = set()
     for file in files:
         file_path = Path(file)
@@ -31,12 +39,29 @@ def filter_files(files: Iterable[str]) -> set[str]:
 
 
 def batch(iterable, n=1):
+    """Yield successive n-sized chunks from an iterable.
+    
+    Args:
+        iterable Iterable: An iterable (e.g. list, tuple, etc.) to be divided into chunks.
+        n int: The size of each chunk. Defaults to 1.
+    
+    Returns:
+        Iterator: An iterator that yields n-sized chunks from the iterable.
+    """
     l = len(iterable)
     for ndx in range(0, l, n):
         yield islice(iterable, ndx, min(ndx + n, l))
 
 
 def hash_text(text: str | list[str]) -> str:
+    """Generates a SHA-256 hash of the given text or concatenated list of strings.
+    
+    Args:
+        text (str | list[str]): The input text as a string or a list of strings to be hashed.
+    
+    Returns:
+        str: The hexadecimal representation of the SHA-256 hash of the input text.
+    """
     full_text = text if isinstance(text, str) else "".join(text)
     return hashlib.sha256(full_text.encode()).hexdigest()
 
@@ -45,6 +70,18 @@ class GenerateCodeRepositoryEmbeddings(Step):
     required_keys = {}
 
     def __init__(self, inputs: dict):
+        """Initializes the class with the provided inputs.
+        
+        Args:
+            inputs dict: A dictionary containing the necessary initialization parameters.
+                It must include all the required keys specified in `self.required_keys`.
+        
+        Raises:
+            ValueError: If any of the required keys are missing from the inputs dictionary.
+        
+        Returns:
+            None
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -54,6 +91,19 @@ class GenerateCodeRepositoryEmbeddings(Step):
         self.inputs = inputs
 
     def run(self) -> dict:
+        """Runs the embedding generation process for files in the current working directory.
+        
+        This method locates relevant files based on specific extensions, extracts their content, 
+        and creates embeddings. It also handles version control integration by appending the current 
+        git commit hash to the embedding name and manages cached documents by interacting 
+        with an external collection client.
+        
+        Args:
+            self: The instance of the class containing this method.
+        
+        Returns:
+            dict: A dictionary containing the updated inputs, including the embedding name and generated documents.
+        """
         cwd = Path.cwd()
         base_embedding_name = cwd.name
         embedding_name = base_embedding_name

@@ -24,6 +24,14 @@ _DEFAULT_INPUT_FILE = Path(__file__).parent / "defaults.yml"
 
 class GenerateREADME(Step):
     def __init__(self, inputs: dict):
+        """Initializes a new instance of the class and configures the input parameters for the patch workflow.
+        
+        Args:
+            inputs dict: A dictionary containing initial input values for the patch workflow.
+        
+        Returns:
+            None
+        """
         PatchflowProgressBar(self).register_steps(
             CallCode2Prompt,
             CallLLM,
@@ -60,6 +68,14 @@ class GenerateREADME(Step):
         self.inputs = final_inputs
 
     def run(self) -> dict:
+        """Executes the workflow for processing input data, generating patches, and creating a pull request.
+        
+        Args:
+            self: The instance of the class.
+        
+        Returns:
+            dict: A dictionary containing updated inputs and output information after processing the workflow.
+        """
         outputs = CallCode2Prompt(self.inputs).run()
         self.inputs["files_to_patch"] = self.inputs["prompt_values"] = [outputs]
         self.inputs["response_partitions"] = {"patch": []}

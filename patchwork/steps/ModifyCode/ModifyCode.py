@@ -12,6 +12,17 @@ def save_file_contents(file_path, content):
 
 
 def handle_indent(src: list[str], target: list[str], start: int, end: int) -> list[str]:
+    """Adjusts the indentation of the target lines based on the indentation of the source lines.
+    
+    Args:
+        src (list[str]): A list of source code lines from which to inherit indentation.
+        target (list[str]): A list of target code lines to adjust the indentation for.
+        start (int): The starting index in the source list to look for indentation.
+        end (int): The ending index in the source list to look for indentation.
+    
+    Returns:
+        list[str]: A new list of target lines with adjusted indentation.
+    """
     if len(target) < 1:
         return target
 
@@ -38,6 +49,17 @@ def replace_code_in_file(
     end_line: int | None,
     new_code: str,
 ) -> None:
+    """Replaces specified lines in a file with new code.
+    
+    Args:
+        file_path str: The path of the file to modify.
+        start_line int | None: The starting line index to replace, or None if no replacement should occur.
+        end_line int | None: The ending line index to replace, or None if no replacement should occur.
+        new_code str: The new code that will be inserted into the specified lines.
+    
+    Returns:
+        None: This function does not return a value. It modifies the file in place.
+    """
     path = Path(file_path)
     new_code_lines = new_code.splitlines(keepends=True)
     if len(new_code_lines) > 0 and not new_code_lines[-1].endswith("\n"):
@@ -64,6 +86,18 @@ class ModifyCode(Step):
     required_keys = {FILES_TO_PATCH, UPDATED_SNIPPETS_KEY}
 
     def __init__(self, inputs: dict):
+        """Initializes the class with the provided input dictionary and validates the presence of required keys.
+        
+        Args:
+            inputs dict: A dictionary containing required inputs needed for initialization.
+        
+        Raises:
+            ValueError: If any of the required keys are missing from the input dictionary.
+        
+        Attributes:
+            files_to_patch: The value associated with the key FILES_TO_PATCH from the input dictionary.
+            extracted_responses: The value associated with the key UPDATED_SNIPPETS_KEY from the input dictionary.
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -72,6 +106,21 @@ class ModifyCode(Step):
         self.extracted_responses = inputs[self.UPDATED_SNIPPETS_KEY]
 
     def run(self) -> dict:
+        """Executes the process of modifying code files based on extracted responses.
+        
+        This method sorts the provided code snippets along with their respective 
+        extracted responses by their start line in descending order. It applies 
+        the modifications to the specified files and returns a summary of the 
+        modified files.
+        
+        Args:
+            self: The instance of the class containing the method.
+        
+        Returns:
+            dict: A dictionary containing a list of modified code files, where 
+                  each entry includes the path, start line, end line, and additional 
+                  details from the extracted response.
+        """
         modified_code_files = []
         sorted_list = sorted(
             zip(self.files_to_patch, self.extracted_responses), key=lambda x: x[0].get("startLine", -1), reverse=True

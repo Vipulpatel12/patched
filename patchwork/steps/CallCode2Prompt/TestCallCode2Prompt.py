@@ -6,6 +6,14 @@ from patchwork.steps import CallCode2Prompt
 
 class TestCallCode2Prompt(unittest.TestCase):
     def test_run(self):
+        """Test the run method of the CallCode2Prompt class to ensure it generates non-empty markdown content.
+        
+        Args:
+            self: test instance reference
+        
+        Returns:
+            None: This method does not return a value; it asserts the presence of markdown content.
+        """
         inputs = {}
         folder_path = Path.cwd()
         inputs["folder_path"] = folder_path

@@ -26,14 +26,38 @@ class StepStatus(Enum):
     FAILED = (4, logger.error)
 
     def __init__(self, priority: int, logger_func):
+        """Initializes a new instance with a specified priority and a logging function.
+        
+        Args:
+            priority int: The priority level for the instance, determining its importance or order in processing.
+            logger_func callable: A function used for logging messages or errors.
+        
+        Returns:
+            None
+        """
         self.priority = priority
         self._logger = logger_func
 
     def __str__(self):
+        """Return a string representation of the object.
+        
+        This method converts the name of the object to lowercase and returns it.
+        
+        Returns:
+            str: The lowercase representation of the object's name.
+        """
         return self.name.lower()
 
     @classmethod
     def values(cls):
+        """Returns a list of all the values in the StepStatus enumeration.
+        
+        Args:
+            cls: Type[StepStatus]: The class reference to the StepStatus enumeration.
+        
+        Returns:
+            list: A list containing all the values of the StepStatus enumeration.
+        """
         return list(StepStatus.__members__.values())
 
 
@@ -65,6 +89,17 @@ class Step(abc.ABC):
         self.run = self.__managed_run
 
     def __init_subclass__(cls, **kwargs):
+        """Initializes the subclass with optional input and output class attributes.
+        
+        This method sets the `__input_class` and `__output_class` attributes of the subclass based on the provided keyword arguments or by looking up class attributes. It ensures that these attributes are set only if they are not None and are TypedDicts.
+        
+        Args:
+            cls type: The class being initialized as a subclass.
+            **kwargs: Additional keyword arguments that may contain the 'input_class' and 'output_class'.
+        
+        Returns:
+            None: This method does not return a value.
+        """ 
         input_class = kwargs.get("input_class", None) or getattr(cls, "input_class", None)
         output_class = kwargs.get("output_class", None) or getattr(cls, "output_class", None)
 
@@ -79,6 +114,15 @@ class Step(abc.ABC):
             cls.__output_class = None
 
     def __managed_run(self, *args, **kwargs) -> Any:
+        """Executes a managed run of the original run method, handling exceptions and logging status messages.
+        
+        Args:
+            *args: Positional arguments to be passed to the original run method.
+            **kwargs: Keyword arguments to be passed to the original run method.
+        
+        Returns:
+            Any: The output of the original run method if successful.
+        """ 
         self.debug(self.inputs)
         logger.info(f"Run started {self.__step_name}")
         exc = None
@@ -101,6 +145,18 @@ class Step(abc.ABC):
         return output
 
     def set_status(self, status: StepStatus, msg: Optional[str] = None):
+        """Sets the status of the step with an optional message.
+        
+        Args:
+            status StepStatus: The status to be set for the step.
+            msg Optional[str]: An optional message associated with the status.
+        
+        Raises:
+            ValueError: If the provided status is not valid.
+        
+        Returns:
+            None: This method does not return a value.
+        """
         if status not in StepStatus.values():
             raise ValueError(f"Invalid status: {status}")
         self.__status = status
@@ -110,6 +166,16 @@ class Step(abc.ABC):
             self.__status_msg = msg
 
     def get_key(self):
+        """Retrieve a single key press from the user, handling input differently for
+        Windows and Unix-based systems.
+        
+        On Windows, it uses msvcrt.getch() to get the key press directly. On Linux and 
+        macOS, it sets the terminal to raw mode in order to capture the input before 
+        restoring the previous terminal settings.
+        
+        Returns:
+            str: The character representing the key pressed by the user.
+        """
         if os.name == "nt":  # Windows
             return msvcrt.getch().decode("utf-8")
         else:  # Linux / macOS
@@ -123,6 +189,14 @@ class Step(abc.ABC):
             return key
 
     def debug(self, inputs):
+        """Logs the provided input parameters for debugging purposes if debugging is enabled.
+        
+        Args:
+            inputs dict: A dictionary containing input parameters, with an optional 'debug' key that controls the logging behavior.
+        
+        Returns:
+            None: This method does not return a value; it performs logging based on the input parameters.
+        """
         if inputs.get("debug") is None or inputs.get("debug") is False:
             return
         logger.info("\nInputs:")
@@ -148,10 +222,26 @@ class Step(abc.ABC):
 
     @property
     def status(self) -> StepStatus:
+        """Retrieves the current status of the step.
+        
+        Args:
+            None
+        
+        Returns:
+            StepStatus: The current status of the step.
+        """
         return self.__status
 
     @property
     def status_message(self) -> Optional[str]:
+        """Retrieves the status message of the instance.
+        
+        Args:
+            None
+        
+        Returns:
+            Optional[str]: The status message if available, otherwise None.
+        """  
         return self.__status_msg
 
     @abc.abstractmethod

@@ -10,6 +10,15 @@ class CreateIssueComment(Step):
     required_keys = {"issue_url", "issue_text"}
 
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class, setting up the source control management (SCM) client based on the provided inputs.
+        
+        Args:
+            inputs dict: A dictionary containing the required input data, which must include either 'github_api_key' or 'gitlab_api_key', 
+                          and optionally include 'scm_url', 'issue_text', and 'issue_url'.
+        
+        Raises:
+            ValueError: If any required keys are missing in the inputs or if neither 'github_api_key' nor 'gitlab_api_key' is provided.
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -29,6 +38,14 @@ class CreateIssueComment(Step):
         self.issue_url = inputs["issue_url"]
 
     def run(self) -> dict:
+        """Executes the process of creating an issue comment and returns the URL of the created comment.
+        
+        Args:
+            self: The instance of the class that contains this method, which has access to the scm_client and issue_url attributes.
+        
+        Returns:
+            dict: A dictionary containing the URL of the created issue comment with the key 'issue_comment_url'.
+        """ 
         try:
             slug, issue_id = self.scm_client.get_slug_and_id_from_url(self.issue_url)
             url = self.scm_client.create_issue_comment(slug, self.issue_text, issue_id=issue_id)
