@@ -24,6 +24,15 @@ from patchwork.common.client.llm.protocol import NOT_GIVEN, LlmClient, NotGiven
 
 
 def _anthropic_to_openai_response(model: str, anthropic_response: Message) -> ChatCompletion:
+    """Converts an Anthropics API response into an OpenAI ChatCompletion format.
+    
+    Args:
+        model (str): The model identifier used for generating the response.
+        anthropic_response (Message): The response object from the Anthropics API containing message content and usage information.
+    
+    Returns:
+        ChatCompletion: An OpenAI ChatCompletion object that encapsulates the converted response and related metadata.
+    """
     stop_reason_map = {"end_turn": "stop", "max_tokens": "length", "stop_sequence": "stop", "tool_use": "tool_calls"}
 
     choices = []
@@ -71,11 +80,27 @@ class AnthropicLlmClient(LlmClient):
     __100k_models = {"claude-2.0", "claude-instant-1.2"}
 
     def __init__(self, api_key: str):
+        """Initializes an instance of the class with the provided API key.
+        
+        Args:
+            api_key str: The API key used to authenticate with the Anthropic service.
+        
+        Returns:
+            None: This constructor does not return a value.
+        """
         self.client = Anthropic(api_key=api_key)
 
     def __get_model_limit(self, model: str) -> int:
         # it is observed that the count tokens is not accurate, so we are using a safety margin
         # we usually see 40k tokens overestimation on large prompts
+        """Retrieve the maximum token limit for a given model, applying a safety margin to account for overestimation in token counting.
+        
+        Args:
+            model str: The name of the model for which to retrieve the token limit.
+        
+        Returns:
+            int: The adjusted maximum token limit for the specified model, accounting for the safety margin.
+        """
         safety_margin = 40_000
         if model in self.__100k_models:
             return 100_000 - safety_margin
@@ -83,12 +108,39 @@ class AnthropicLlmClient(LlmClient):
 
     @lru_cache(maxsize=None)
     def get_models(self) -> set[str]:
+        """Retrieves a set of model names by combining definitely allowed models 
+        with the allowed model prefix.
+        
+        Args:
+            None
+        
+        Returns:
+            set[str]: A set of model names including both explicitly allowed models 
+            and those that match the allowed model prefix.
+        """
         return self.__definitely_allowed_models.union(set(f"{self.__allowed_model_prefix}*"))
 
     def is_model_supported(self, model: str) -> bool:
+        """Checks if the specified model is supported.
+        
+        Args:
+            model str: The name of the model to check for support.
+        
+        Returns:
+            bool: True if the model is supported; otherwise, False.
+        """ 
         return model in self.__definitely_allowed_models or model.startswith(self.__allowed_model_prefix)
 
     def is_prompt_supported(self, messages: Iterable[ChatCompletionMessageParam], model: str) -> int:
+        """Checks if the total token count of the provided messages exceeds the model's limit.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: An iterable collection of chat completion messages to analyze.
+            model str: The identifier of the model to determine its token limit.
+        
+        Returns:
+            int: The remaining token count if within the limit, or -1 if the total exceeds the model's limit.
+        """
         model_limit = self.__get_model_limit(model)
         token_count = 0
         for message in messages:
@@ -102,6 +154,15 @@ class AnthropicLlmClient(LlmClient):
     def truncate_messages(
         self, messages: Iterable[ChatCompletionMessageParam], model: str
     ) -> Iterable[ChatCompletionMessageParam]:
+        """Truncates a list of chat messages to fit within model constraints.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: An iterable containing the chat messages to be truncated.
+            model str: The identifier of the model used to determine truncation limits.
+        
+        Returns:
+            Iterable[ChatCompletionMessageParam]: An iterable containing the truncated chat messages.
+        """
         return self._truncate_messages(self, messages, model)
 
     def chat_completion(
@@ -120,6 +181,26 @@ class AnthropicLlmClient(LlmClient):
         top_logprobs: Optional[int] | NotGiven = NOT_GIVEN,
         top_p: Optional[float] | NotGiven = NOT_GIVEN,
     ) -> ChatCompletion:
+        """Generates a chat completion response based on the provided messages and model parameters.
+        
+        Args:
+            messages Iterable[ChatCompletionMessageParam]: A collection of messages to be processed, including system and user messages.
+            model str: The model to use for generating the chat completion.
+            frequency_penalty Optional[float] | NotGiven: (Optional) A penalty applied to frequency of words.
+            logit_bias Optional[Dict[str, int]] | NotGiven: (Optional) A bias applied to specific tokens.
+            logprobs Optional[bool] | NotGiven: (Optional) Whether to include log probabilities of the tokens.
+            max_tokens Optional[int] | NotGiven: (Optional) The maximum number of tokens to generate in the completion.
+            n Optional[int] | NotGiven: (Optional) The number of completions to generate for each prompt.
+            presence_penalty Optional[float] | NotGiven: (Optional) A penalty applied to presence of words in the chat.
+            response_format completion_create_params.ResponseFormat | NotGiven: (Optional) The format in which to return the response.
+            stop Union[Optional[str], List[str]] | NotGiven: (Optional) A stop sequence or sequences where the response generation will halt.
+            temperature Optional[float] | NotGiven: (Optional) A sampling temperature to control randomness in the output.
+            top_logprobs Optional[int] | NotGiven: (Optional) The number of log probabilities to include for the most likely tokens.
+            top_p Optional[float] | NotGiven: (Optional) A value to control diversity through nucleus sampling.
+        
+        Returns:
+            ChatCompletion: The generated chat completion response containing the response text and other related data.
+        """
         system: Union[str, Iterable[TextBlockParam]] | NotGiven = NOT_GIVEN
         other_messages = []
         for message in messages:
