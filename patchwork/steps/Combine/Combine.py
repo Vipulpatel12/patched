@@ -6,6 +6,19 @@ from patchwork.steps.Combine.typed import CombineInputs
 
 class Combine(Step):
     def __init__(self, inputs):
+        """Initializes an instance of the class while validating the provided inputs.
+        
+        Args:
+            inputs dict: A dictionary containing input values required for initialization.
+                It must include 'base_json' and 'update_json'. 
+        
+        Raises:
+            ValueError: If any required keys defined in `__required_keys__` are missing from the inputs.
+        
+        Attributes:
+            base dict: The base JSON data extracted from the inputs.
+            update dict: The update JSON data extracted from the inputs.
+        """
         super().__init__(inputs)
         missing_keys = CombineInputs.__required_keys__.difference(inputs.keys())
         if len(missing_keys) > 0:
@@ -15,6 +28,17 @@ class Combine(Step):
         self.update = inputs["update_json"]
 
     def run(self):
+        """Merges two data structures (lists or dictionaries) into a single dictionary or list,
+           depending on the types of the inputs.
+        
+        Args:
+            self.base (list|dict): The first data structure to merge.
+            self.update (list|dict): The second data structure to merge.
+        
+        Returns:
+            dict: A dictionary containing the merged result, structured with 'result_json' 
+                  as a key referencing the final merged output.
+        """
         base_list = isinstance(self.base, list)
         update_list = isinstance(self.update, list)
         if not base_list and not update_list:
