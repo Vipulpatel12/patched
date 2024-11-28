@@ -9,6 +9,20 @@ from patchwork.steps import ScanDepscan
 
 @pytest.mark.skip(reason="Seeing F in CI but not locally")
 def test_run():
+    """Tests the functionality of the ScanDepscan step by creating a temporary package-lock.json file
+    and verifying its processing.
+    
+    This function creates a temporary directory to simulate a package environment, writes a sample 
+    package-lock.json file, and changes the working directory to the temporary directory. It then 
+    instantiates the ScanDepscan class, runs its analysis, and asserts that the output contains 
+    valid Software Bill of Materials (SBOM) values.
+    
+    Args:
+        None
+    
+    Returns:
+        None
+    """
     inputs = {}
     # String content to be written to the package.lock file
     package_lock_content = """{
