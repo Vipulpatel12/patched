@@ -6,11 +6,28 @@
 
 
 template<typename T>
+/**
+ * Calculates the sum of two values of type T.
+ * 
+ * @param a The first value to be added.
+ * @param b The second value to be added.
+ * @return The sum of a and b.
+ */
 T a_plus_b(T a, T b) {
     return a + b;
 }
 
 
+/**
+ * Executes a SQL query on the provided SQLite database and returns the results 
+ * as a vector of vector of strings, where each inner vector represents a row 
+ * of the result set.
+ * 
+ * @param db A pointer to the SQLite database connection.
+ * @param query The SQL query to be executed.
+ * @return A vector of vectors containing the results of the query, each inner 
+ *         vector representing a row and each string representing a column value.
+ */
 std::vector<std::vector<std::string>> sqlite(sqlite3* db, const std::string& query) {
     std::vector<std::vector<std::string>> results;
     sqlite3_stmt* stmt;
@@ -38,6 +55,20 @@ std::vector<std::vector<std::string>> sqlite(sqlite3* db, const std::string& que
 
 
 template<typename T, typename F>
+/**
+ * Compares two items using a provided key mapping function.
+ * 
+ * This function applies the `key_map` function to both `item1` and `item2`
+ * and returns an integer indicating their relative ordering:
+ * - A negative value if `item1` is less than `item2`
+ * - A positive value if `item1` is greater than `item2`
+ * - Zero if they are considered equal
+ *
+ * @param F key_map A function that maps items of type T to comparable values.
+ * @param const T& item1 The first item to compare.
+ * @param const T& item2 The second item to compare.
+ * @return int An integer representing the comparison result.
+ */
 int compare(F key_map, const T& item1, const T& item2) {
     auto val1 = key_map(item1);
     auto val2 = key_map(item2);
@@ -48,6 +79,13 @@ int compare(F key_map, const T& item1, const T& item2) {
 }
 
 
+/**
+ * Generates a random string of specified length composed of 
+ * lowercase and uppercase alphabetic characters.
+ * 
+ * @param length The desired length of the random alphabet string.
+ * @return A string containing random alphabet characters of the specified length.
+ */
 std::string random_alphabets(int length) {
     static const std::string chars =
         "abcdefghijklmnopqrstuvwxyz"
