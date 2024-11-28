@@ -130,6 +130,17 @@ def setup_cli():
         None
     """
     def sigint_handler(signum, frame):
+        """Handles the SIGINT signal.
+        
+        This function is a signal handler that gets called when a SIGINT signal is received. It logs a message indicating that a SIGINT was received and then exits the program with a status code of 1.
+        
+        Args:
+            signum (int): The signal number that was received.
+            frame (signal frame): The current stack frame when the signal was received.
+        
+        Returns:
+            None
+        """
         logger.info("Received SIGINT, exiting")
         exit(1)
 
