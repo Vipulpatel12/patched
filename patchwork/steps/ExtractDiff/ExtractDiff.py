@@ -45,6 +45,14 @@ def generate_version_combinations(vuln_version, fixed_version):
 
     # Function to transform pre-release versions to extended patch versions
     def convert_pre_release_to_patch(version):
+        """Converts a pre-release version string to a patch version string by extracting the numeric identifier from the pre-release part.
+        
+        Args:
+            version str: The version string to convert, which may include a pre-release identifier.
+        
+        Returns:
+            str: The modified version string, or the original version if it does not contain a pre-release part.
+        """ 
         parts = version.split("-")
         if len(parts) > 1 and parts[1].startswith("pre."):
             pre_release_part = parts[1].split(".")[1]  # Assumes a single numeric identifier for simplification
@@ -147,6 +155,15 @@ def extract_diff_sections(diff_lines):
 
 
 def get_diff_sections(diff_file_path: str | Path, language: str) -> list[str]:
+    """Reads a diff file, processes its content based on the specified programming language, and extracts the different sections of the diff.
+    
+    Args:
+        diff_file_path (str | Path): The path to the diff file that needs to be read.
+        language (str): The programming language for which the diff content is being processed.
+    
+    Returns:
+        list[str]: A list of strings representing the extracted sections from the diff content.
+    """
     with open(diff_file_path, "r") as file:
         diff_content = file.read()
 
@@ -157,6 +174,21 @@ def get_diff_sections(diff_file_path: str | Path, language: str) -> list[str]:
 
 class ExtractDiff(Step):
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class by validating input parameters and setting internal attributes.
+        
+        Args:
+            inputs dict: A dictionary containing required keys for initialization, including 'update_info', 'libraries_api_key', and 'github_api_key'.
+        
+        Raises:
+            ValueError: If any of the required keys are missing from the inputs dictionary.
+        
+        Attributes:
+            libraries_api_key (str): The API key for accessing library information.
+            libraries_base_url (str): The base URL for the libraries API.
+            github_token (str): The GitHub API token for authentication.
+            update_info (Any): The information related to updates.
+            inputs (dict): The original inputs dictionary passed to the constructor.
+        """
         super().__init__(inputs)
         required_keys = {"update_info", "libraries_api_key", "github_api_key"}
 
@@ -172,6 +204,17 @@ class ExtractDiff(Step):
         self.inputs = inputs
 
     def run(self) -> dict:
+        """Runs the process to fetch and compare version differences of a library hosted on GitHub.
+        
+        This method constructs a URL to fetch the repository information from GitHub based on the provided package URL,
+        retrieves the repository URL, and generates a diff of the specified vulnerable and fixed versions for analysis.
+        
+        Args:
+            self: The instance of the class that contains this method.
+        
+        Returns:
+            dict: A dictionary containing prompt values, library name, and platform type, or an empty dictionary if the operation fails.
+        """
         regex = r"https?://github\.com/(?P<owner>[^/]+)/(?P<repo>[^/]+)"
         base_url = "https://api.github.com/repos/"
         update_info = self.update_info
