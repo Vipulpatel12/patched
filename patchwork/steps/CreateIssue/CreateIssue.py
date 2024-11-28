@@ -15,6 +15,14 @@ class CreateIssue(Step):
     required_keys = {"issue_title", "issue_text", "scm_url"}
 
     def __init__(self, inputs: dict):
+        """Initializes an instance of the class by validating inputs and setting up the SCM client.
+        
+        Args:
+            inputs dict: A dictionary containing required inputs such as API keys, SCM URL, issue title, and issue text.
+        
+        Returns:
+            None: This method does not return a value, but raises a ValueError if required keys are missing.
+        """
         super().__init__(inputs)
         if not all(key in inputs.keys() for key in self.required_keys):
             raise ValueError(f'Missing required data: "{self.required_keys}"')
@@ -33,6 +41,14 @@ class CreateIssue(Step):
         self.issue_text = inputs["issue_text"]
 
     def run(self) -> dict:
+        """Executes the process of creating an issue comment in a Git repository.
+        
+        Args:
+            self: The instance of the class that this method belongs to.
+        
+        Returns:
+            dict: A dictionary containing the 'issue_url' key which holds the URL of the created issue comment.
+        """
         repo = git.Repo(Path.cwd(), search_parent_directories=True)
 
         original_remote_name = "origin"
