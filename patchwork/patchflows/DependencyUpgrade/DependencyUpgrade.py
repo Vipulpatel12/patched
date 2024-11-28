@@ -28,6 +28,14 @@ _DEFAULT_INPUT_FILE = Path(__file__).parent / "defaults.yml"
 
 class DependencyUpgrade(Step):
     def __init__(self, inputs: dict):
+        """Initializes the class and sets up the patch workflow with specified input parameters.
+        
+        Args:
+            inputs dict: A dictionary containing input parameters for the patch workflow.
+        
+        Returns:
+            None: This method does not return any value.
+        """
         PatchflowProgressBar(self).register_steps(
             AnalyzeImpact,
             CallLLM,
@@ -67,6 +75,14 @@ class DependencyUpgrade(Step):
         self.inputs = final_inputs
 
     def run(self) -> dict:
+        """Executes the process of analyzing and modifying code to address vulnerabilities.
+        
+        Args:
+            self: The instance of the class containing this method.
+        
+        Returns:
+            dict: A dictionary containing updated inputs including pull request information and modified code files.
+        """
         outputs = ScanDepscan(self.inputs).run()
         self.inputs.update(outputs)
         outputs = ExtractPackageManagerFile(self.inputs).run()
