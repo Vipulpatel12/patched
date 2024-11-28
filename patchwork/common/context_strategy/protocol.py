@@ -168,4 +168,12 @@ class TreeSitterStrategy(ContextStrategyProtocol):
 
     @property
     def language(self) -> LanguageProtocol:
+        """Returns the language protocol associated with the object.
+        
+        Args:
+            None
+        
+        Returns:
+            LanguageProtocol: The language protocol instance linked to this object.
+        """
         return self.language_protocol
